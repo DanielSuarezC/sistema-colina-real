@@ -1,26 +1,37 @@
 import { Routes } from '@angular/router';
-import { LayoutComponent } from './components/layout/layout.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { TransactionFormComponent } from './components/transaction-form/transaction-form.component';
-import { SettlementReportComponent } from './components/settlement-report/settlement-report.component';
+import { SalesFormComponent } from './components/sales-form/sales-form.component';
+import { RefacilFormComponent } from './components/refacil-form/refacil-form.component';
+import { LoginComponent } from './components/login/login.component';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
     {
         path: '',
-        component: LayoutComponent,
-        children: [
-            {
-                path: '',
-                component: DashboardComponent
-            },
-            {
-                path: 'transactions/new',
-                component: TransactionFormComponent
-            },
-            {
-                path: 'settlement',
-                component: SettlementReportComponent
-            }
-        ]
+        redirectTo: '/dashboard',
+        pathMatch: 'full'
+    },
+    {
+        path: 'login',
+        component: LoginComponent
+    },
+    {
+        path: 'dashboard',
+        component: DashboardComponent,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'sales',
+        component: SalesFormComponent,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'recargas',
+        component: RefacilFormComponent,
+        canActivate: [authGuard]
+    },
+    {
+        path: '**',
+        redirectTo: '/dashboard'
     }
 ];
