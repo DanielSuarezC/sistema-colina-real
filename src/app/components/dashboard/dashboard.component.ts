@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
+import { ThemeService } from '../../services/theme.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { CashBoxType } from '../../models/cash-box.model';
@@ -16,6 +17,7 @@ import { CashBoxType } from '../../models/cash-box.model';
 })
 export class DashboardComponent implements OnInit {
   financeService = inject(FinanceService);
+  themeService = inject(ThemeService);
 
   // Transfer modal properties
   showTransferModal = false;
@@ -27,8 +29,12 @@ export class DashboardComponent implements OnInit {
   // Cash box type enum for template
   CashBoxType = CashBoxType;
 
+  // State for chart controls
+  selectedPeriod: '7d' | '30d' | '90d' = '7d';
+  chartType: 'bar' | 'line' = 'bar'; // 'line' will represent the area chart
+
   // Weekly sales chart
-  public weeklySalesChart: ChartConfiguration['data'] = {
+  public salesChartData: ChartConfiguration['data'] = {
     datasets: [],
     labels: []
   };
@@ -66,7 +72,7 @@ export class DashboardComponent implements OnInit {
     // Re-run chart logic automatically when signals change
     effect(() => {
       this.financeService.sales(); // Dependency tracking
-      this.loadWeeklySalesData();
+      this.loadSalesChartData();
     });
   }
 
@@ -74,27 +80,53 @@ export class DashboardComponent implements OnInit {
     // Initial call is now handled by the effect or can be kept here
   }
 
-  async loadWeeklySalesData() {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+  setPeriod(period: '7d' | '30d' | '90d') {
+    this.selectedPeriod = period;
+    this.loadSalesChartData();
+  }
+
+  setChartType(type: 'bar' | 'line') {
+    this.chartType = type;
+    this.chartOptions = {
+      ...this.chartOptions,
+      scales: {
+        ...this.chartOptions?.scales,
+        x: { stacked: type === 'bar' },
+        y: { stacked: type === 'bar', beginAtZero: true }
+      }
+    };
+    this.loadSalesChartData();
+  }
+
+  async loadSalesChartData() {
+    const daysCount = this.selectedPeriod === '7d' ? 7 : this.selectedPeriod === '30d' ? 30 : 90;
+
+    const lastNDays = Array.from({ length: daysCount }, (_, i) => {
       const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
+      date.setDate(date.getDate() - (daysCount - 1 - i));
       return date;
     });
 
-    const labels = last7Days.map(d =>
-      d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' })
+    const labels = lastNDays.map(d =>
+      d.toLocaleDateString('es-CO', daysCount > 7 ? { month: 'short', day: 'numeric' } : { weekday: 'short', day: 'numeric' })
     );
 
     // Group sales by category and day
-    const salesByCategory = {
-      SR_ROBERT: new Array(7).fill(0),
-      DANIEL: new Array(7).fill(0),
-      SERVICIOS: new Array(7).fill(0)
+    const categories = ['SR_ROBERT', 'DANIEL', 'SERVICIOS'];
+    const salesByCategory: Record<string, number[]> = {
+      SR_ROBERT: new Array(daysCount).fill(0),
+      DANIEL: new Array(daysCount).fill(0),
+      SERVICIOS: new Array(daysCount).fill(0)
     };
+
+    const periodStartDate = lastNDays[0];
+    periodStartDate.setHours(0, 0, 0, 0);
 
     this.financeService.sales().forEach(sale => {
       const saleDate = new Date(sale.date);
-      const dayIndex = last7Days.findIndex(d =>
+      if (saleDate < periodStartDate) return;
+
+      const dayIndex = lastNDays.findIndex(d =>
         d.toDateString() === saleDate.toDateString()
       );
 
@@ -103,29 +135,40 @@ export class DashboardComponent implements OnInit {
       }
     });
 
-    this.weeklySalesChart = {
+    const isArea = this.chartType === 'line';
+
+    this.salesChartData = {
       labels,
       datasets: [
         {
           label: 'Inventario Sr. Robert',
-          data: salesByCategory.SR_ROBERT,
-          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          data: salesByCategory['SR_ROBERT'],
+          backgroundColor: isArea ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.7)',
           borderColor: 'rgb(59, 130, 246)',
-          borderWidth: 1
+          borderWidth: isArea ? 2 : 1,
+          fill: isArea,
+          tension: 0.4,
+          type: this.chartType as any
         },
         {
           label: 'Inventario Daniel',
-          data: salesByCategory.DANIEL,
-          backgroundColor: 'rgba(16, 185, 129, 0.7)',
+          data: salesByCategory['DANIEL'],
+          backgroundColor: isArea ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.7)',
           borderColor: 'rgb(16, 185, 129)',
-          borderWidth: 1
+          borderWidth: isArea ? 2 : 1,
+          fill: isArea,
+          tension: 0.4,
+          type: this.chartType as any
         },
         {
           label: 'Servicios',
-          data: salesByCategory.SERVICIOS,
-          backgroundColor: 'rgba(245, 158, 11, 0.7)',
+          data: salesByCategory['SERVICIOS'],
+          backgroundColor: isArea ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.7)',
           borderColor: 'rgb(245, 158, 11)',
-          borderWidth: 1
+          borderWidth: isArea ? 2 : 1,
+          fill: isArea,
+          tension: 0.4,
+          type: this.chartType as any
         }
       ]
     };

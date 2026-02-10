@@ -16,6 +16,15 @@ export class RefacilFormComponent {
 
     amount = 0;
     description = '';
+    date = new Date();
+
+    parseDate(dateString: string): Date {
+        return new Date(dateString + 'T12:00:00');
+    }
+
+    formatDateInput(d: Date): string {
+        return new Date(d).toISOString().split('T')[0];
+    }
 
     get profit5_5(): number {
         return Math.round(this.amount * 0.055 * 100) / 100;
@@ -34,7 +43,8 @@ export class RefacilFormComponent {
         try {
             await this.financeService.recordRefacilTransaction(
                 this.amount,
-                this.description || undefined
+                this.description || undefined,
+                this.date
             );
 
             alert('¡Recarga registrada exitosamente!');
@@ -48,6 +58,7 @@ export class RefacilFormComponent {
     resetForm() {
         this.amount = 0;
         this.description = '';
+        this.date = new Date();
     }
 
     formatCurrency(amount: number): string {

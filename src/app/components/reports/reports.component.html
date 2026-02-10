@@ -1,18 +1,20 @@
-<div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
+<div
+    class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800 p-6 transition-colors duration-300">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="mb-6 flex justify-between items-end">
             <div>
                 <div class="flex items-center mb-2">
-                    <button routerLink="/dashboard" class="mr-4 text-slate-600 hover:text-slate-800">
+                    <button routerLink="/dashboard"
+                        class="mr-4 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                             </path>
                         </svg>
                     </button>
-                    <h1 class="text-3xl font-bold text-slate-800">Reportes Financieros</h1>
+                    <h1 class="text-3xl font-bold text-slate-800 dark:text-white">Reportes Financieros</h1>
                 </div>
-                <p class="text-slate-600">Resumen detallado de ingresos, egresos y utilidad</p>
+                <p class="text-slate-600 dark:text-slate-400">Resumen detallado de ingresos, egresos y utilidad</p>
             </div>
             <button (click)="exportToExcel()"
                 class="px-6 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-md flex items-center">
@@ -26,7 +28,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8">
             <h3 class="text-lg font-bold text-slate-800 mb-4">🔍 Rango del Reporte</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -62,10 +64,31 @@
             </div>
         </div>
 
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Sales by Category -->
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Ventas por Categoría</h3>
+                <div class="h-64">
+                    <canvas baseChart [data]="salesChartData()" [options]="chartOptions" type="doughnut">
+                    </canvas>
+                </div>
+            </div>
+
+            <!-- Income vs Expenses -->
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Ingresos vs Gastos</h3>
+                <div class="h-64">
+                    <canvas baseChart [data]="incomeVsExpenseChartData()" [options]="chartOptions" type="bar">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+
         <!-- Details Section -->
         <div class="space-y-8">
             <!-- Sales Detail -->
-            <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
                     <h3 class="text-xl font-bold text-slate-800">Detalle de Ventas</h3>
                     <div class="text-right">
@@ -101,7 +124,7 @@
             </div>
 
             <!-- Recargas Detail -->
-            <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
                     <h3 class="text-xl font-bold text-slate-800">Detalle de Recargas (Refácil)</h3>
                     <div class="text-right">
@@ -135,7 +158,7 @@
             </div>
 
             <!-- Expenses Detail -->
-            <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
                     <h3 class="text-xl font-bold text-slate-800">Detalle de Gastos</h3>
                     <div class="text-right">

@@ -6,11 +6,13 @@ import { FinanceService } from '../../services/finance.service';
 import { ExcelExportService } from '../../services/excel-export.service';
 import { SaleCategory, SaleCategoryLabels } from '../../models/sale.model';
 import { ExpenseType, ExpenseTypeLabels } from '../../models/expense.model';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
 @Component({
     selector: 'app-reports',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, BaseChartDirective],
     templateUrl: './reports.component.html'
 })
 export class ReportsComponent {
@@ -69,6 +71,51 @@ export class ReportsComponent {
     totalExpenses = computed(() => this.filteredExpenses().reduce((sum, e) => sum + e.amount, 0));
 
     netResult = computed(() => this.totalProfit() + this.totalRecargasProfit() - this.totalExpenses());
+
+    // Charts
+    salesChartData = computed<ChartData<'doughnut'>>(() => {
+        const sales = this.filteredSales();
+        const categories = Object.values(SaleCategory);
+        const data = categories.map(cat =>
+            sales.filter(s => s.category === cat).reduce((sum, s) => sum + s.gross_amount, 0)
+        );
+
+        return {
+            labels: categories.map(cat => SaleCategoryLabels[cat]),
+            datasets: [{
+                data,
+                backgroundColor: [
+                    '#3b82f6', // blue
+                    '#10b981', // emerald
+                    '#8b5cf6', // violet
+                    '#f59e0b', // amber
+                    '#ef4444'  // red
+                ]
+            }]
+        };
+    });
+
+    incomeVsExpenseChartData = computed<ChartData<'bar'>>(() => {
+        return {
+            labels: ['Ingresos (Utilidad)', 'Egresos (Gastos)'],
+            datasets: [{
+                data: [
+                    this.totalProfit() + this.totalRecargasProfit(),
+                    this.totalExpenses()
+                ],
+                label: 'Monto',
+                backgroundColor: ['#10b981', '#ef4444']
+            }]
+        };
+    });
+
+    chartOptions: ChartConfiguration['options'] = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    };
 
     // Labels for template
     SaleCategoryLabels = SaleCategoryLabels;

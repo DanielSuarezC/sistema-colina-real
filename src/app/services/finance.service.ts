@@ -228,14 +228,19 @@ export class FinanceService {
 
     async recordRefacilTransaction(
         amount: number,
-        description?: string
+        description?: string,
+        date?: Date
     ): Promise<RefacilTransaction> {
+        const trxDate = date || new Date();
+        const profit = Math.round(amount * 0.055 * 100) / 100;
+        const capital = amount - profit;
+
         const { data, error } = await this.supabase
             .from('refacil_transactions')
             .insert({
-                date: new Date().toISOString(),
+                date: trxDate.toISOString(),
                 total_amount: amount,
-                description
+                description: description
             })
             .select()
             .single();
@@ -335,10 +340,22 @@ export class FinanceService {
 
         if (error) throw error;
 
+        // Deduct from the selected box
+        if (investment.source_box) {
+            const box = this.cashBoxesSignal().find(b => b.id === investment.source_box);
+            if (box) {
+                const { error: boxError } = await this.supabase
+                    .from('cash_boxes')
+                    .update({ balance: box.balance - investment.amount })
+                    .eq('id', box.id);
+                if (boxError) console.error('Error updating box balance:', boxError);
+            }
+        }
+
         const newInvestment = this.parseInvestment(data);
         this.investmentsSignal.update(investments => [newInvestment, ...investments]);
 
-        await this.loadCashBoxes(); // Investments deduct from boxes
+        await this.loadCashBoxes(); // Refresh box signals
 
         return newInvestment;
     }

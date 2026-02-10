@@ -1,21 +1,23 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
+<div
+    class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6 transition-colors duration-300">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="mb-6 flex justify-between items-center">
             <div>
                 <div class="flex items-center mb-2">
-                    <button routerLink="/dashboard" class="mr-4 text-slate-600 hover:text-slate-800">
+                    <button routerLink="/dashboard"
+                        class="mr-4 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-white">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                             </path>
                         </svg>
                     </button>
-                    <h1 class="text-3xl font-bold text-slate-800">Historial de Auditoría</h1>
+                    <h1 class="text-3xl font-bold text-slate-800 dark:text-white">Historial de Auditoría</h1>
                 </div>
-                <p class="text-slate-600">Registro completo de cambios y acciones en el sistema</p>
+                <p class="text-slate-600 dark:text-slate-400">Registro completo de cambios y acciones en el sistema</p>
             </div>
             <button (click)="loadLogs()" [disabled]="isLoading"
-                class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">
+                class="px-4 py-2 bg-white border border-slate-300 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">
                 <span class="flex items-center">
                     <svg class="w-4 h-4 mr-2" [class.animate-spin]="isLoading" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -29,11 +31,11 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">🔍 Filtros de Búsqueda</h3>
+        <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">🔍 Filtros de Búsqueda</h3>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tabla</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Tabla</label>
                     <select [(ngModel)]="table_name"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none">
                         <option value="">Todas las tablas</option>
@@ -43,7 +45,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Acción</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Acción</label>
                     <select [(ngModel)]="action"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none">
                         <option value="">Todas las acciones</option>
@@ -53,19 +55,19 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Desde</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Desde</label>
                     <input type="date" [(ngModel)]="startDate"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Hasta</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Hasta</label>
                     <input type="date" [(ngModel)]="endDate"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none">
                 </div>
             </div>
             <div class="flex justify-end space-x-3 mt-6">
                 <button (click)="resetFilters()"
-                    class="px-6 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+                    class="px-6 py-2 border border-slate-300 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 transition-colors">
                     Limpiar
                 </button>
                 <button (click)="loadLogs()"
@@ -80,7 +82,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200">
+                        <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
                             <th class="p-4 text-xs font-bold text-slate-500 uppercase">Fecha y Hora</th>
                             <th class="p-4 text-xs font-bold text-slate-500 uppercase">Tabla</th>
                             <th class="p-4 text-xs font-bold text-slate-500 uppercase">Acción</th>
@@ -92,7 +94,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @for (log of logs; track log.id) {
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="p-4 text-sm text-slate-700">
+                            <td class="p-4 text-sm text-slate-700 dark:text-slate-200">
                                 {{ log.changed_at | date:'dd/MM/yy HH:mm:ss' }}
                             </td>
                             <td class="p-4 text-sm font-medium text-slate-900">
@@ -108,12 +110,12 @@
                             <td class="p-4 text-xs text-slate-500 font-mono">
                                 {{ log.record_id.split('-')[0] }}...
                             </td>
-                            <td class="p-4 text-sm text-slate-600">
+                            <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
                                 {{ log.changed_by || 'Sistema' }}
                             </td>
                             <td class="p-4 text-right">
                                 <button (click)="toggleExpand(log.id)"
-                                    class="text-slate-400 hover:text-slate-600 transition-colors">
+                                    class="text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors">
                                     <svg class="w-5 h-5 inline transition-transform"
                                         [class.rotate-180]="expandedLogId === log.id" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -131,12 +133,12 @@
                                         <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Datos Anteriores
                                         </h4>
                                         <pre
-                                            class="bg-white p-4 rounded-lg border border-slate-200 text-xs text-slate-600 overflow-auto max-h-48">{{ formatData(log.old_data) }}</pre>
+                                            class="bg-white p-4 rounded-lg border border-slate-200 text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-48">{{ formatData(log.old_data) }}</pre>
                                     </div>
                                     <div>
                                         <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Datos Nuevos</h4>
                                         <pre
-                                            class="bg-white p-4 rounded-lg border border-slate-200 text-xs text-slate-600 overflow-auto max-h-48">{{ formatData(log.new_data) }}</pre>
+                                            class="bg-white p-4 rounded-lg border border-slate-200 text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-48">{{ formatData(log.new_data) }}</pre>
                                     </div>
                                 </div>
                             </td>
