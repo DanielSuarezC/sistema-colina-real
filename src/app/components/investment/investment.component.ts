@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { Investment } from '../../models/investment.model';
 import { CashBoxType, CashBoxLabels } from '../../models/cash-box.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
     selector: 'app-investment',
@@ -78,9 +79,9 @@ export class InvestmentComponent {
     }
 
     async submitInvestment() {
-        if (!this.concept.trim()) { alert('El concepto es obligatorio'); return; }
-        if (this.amount <= 0) { alert('El monto debe ser mayor a cero'); return; }
-        if (!this.sourceBox) { alert('Seleccione la caja de origen'); return; }
+        if (!this.concept.trim()) { toast.error('El concepto es obligatorio'); return; }
+        if (this.amount <= 0) { toast.error('El monto debe ser mayor a cero'); return; }
+        if (!this.sourceBox) { toast.error('Seleccione la caja de origen'); return; }
 
         try {
             await this.financeService.recordInvestment({
@@ -91,10 +92,10 @@ export class InvestmentComponent {
                 recovered_amount: 0,
                 description: this.description || undefined
             });
-            alert('¡Inversión registrada exitosamente!');
+            toast.success('¡Inversión registrada exitosamente!');
             this.resetForm();
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast.error('Error: ' + error.message);
         }
     }
 
@@ -107,10 +108,10 @@ export class InvestmentComponent {
         if (!this.recoveryId) return;
         try {
             await this.financeService.updateInvestmentRecovery(this.recoveryId, this.recoveryAmount);
-            alert('Recuperación actualizada');
+            toast.success('Recuperación actualizada');
             this.recoveryId = null;
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast.error('Error: ' + error.message);
         }
     }
 
@@ -119,7 +120,7 @@ export class InvestmentComponent {
         try {
             await this.financeService.deleteInvestment(inv.id);
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast.error('Error: ' + error.message);
         }
     }
 

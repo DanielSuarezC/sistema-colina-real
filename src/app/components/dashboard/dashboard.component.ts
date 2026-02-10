@@ -7,6 +7,7 @@ import { ThemeService } from '../../services/theme.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { CashBoxType } from '../../models/cash-box.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
   selector: 'app-dashboard',
@@ -188,22 +189,22 @@ export class DashboardComponent implements OnInit {
 
   async executeTransfer() {
     if (!this.transferFromBoxId || !this.transferToBoxId) {
-      alert('Por favor seleccione las cajas de origen y destino');
+      toast.error('Por favor seleccione las cajas de origen y destino');
       return;
     }
 
     if (this.transferAmount <= 0) {
-      alert('Por favor ingrese un monto válido');
+      toast.error('Por favor ingrese un monto válido');
       return;
     }
 
     if (!this.transferConcept.trim()) {
-      alert('El concepto es obligatorio');
+      toast.error('El concepto es obligatorio');
       return;
     }
 
     if (this.transferFromBoxId === this.transferToBoxId) {
-      alert('Las cajas de origen y destino deben ser diferentes');
+      toast.error('Las cajas de origen y destino deben ser diferentes');
       return;
     }
 
@@ -216,9 +217,9 @@ export class DashboardComponent implements OnInit {
       );
 
       this.closeTransferModal();
-      alert('Transferencia realizada exitosamente');
+      toast.success('Transferencia realizada exitosamente');
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     }
   }
 

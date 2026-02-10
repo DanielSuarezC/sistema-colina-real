@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { Liquidation, LiquidationBreakdown } from '../../models/liquidation.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
     selector: 'app-liquidation',
@@ -25,7 +26,7 @@ export class LiquidationComponent {
 
     async previewLiquidation() {
         if (!this.startDate || !this.endDate) {
-            alert('Seleccione un rango de fechas');
+            toast.error('Seleccione un rango de fechas');
             return;
         }
 
@@ -35,7 +36,7 @@ export class LiquidationComponent {
             const data = await this.financeService.calculateLiquidation(start, end);
             this.previewData.set(data);
         } catch (error: any) {
-            alert('Error al previsualizar: ' + error.message);
+            toast.error('Error al previsualizar: ' + error.message);
         }
     }
 
@@ -47,12 +48,12 @@ export class LiquidationComponent {
             const start = new Date(this.startDate + 'T00:00:00');
             const end = new Date(this.endDate + 'T23:59:59');
             await this.financeService.createLiquidation(start, end);
-            alert('¡Liquidación creada exitosamente!');
+            toast.success('¡Liquidación creada exitosamente!');
             this.previewData.set(null);
             this.startDate = '';
             this.endDate = '';
         } catch (error: any) {
-            alert('Error al crear: ' + error.message);
+            toast.error('Error al crear: ' + error.message);
         } finally {
             this.isGenerating = false;
         }
@@ -62,9 +63,9 @@ export class LiquidationComponent {
         if (!confirm('¿Está seguro de cerrar este período de liquidación? Esto marcará el período como finalizado.')) return;
         try {
             await this.financeService.closeLiquidationPeriod(id);
-            alert('Período cerrado');
+            toast.success('Período cerrado');
         } catch (error: any) {
-            alert('Error al cerrar: ' + error.message);
+            toast.error('Error al cerrar: ' + error.message);
         }
     }
 

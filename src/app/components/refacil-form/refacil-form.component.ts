@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
+import { toast } from 'ngx-sonner';
 
 @Component({
     selector: 'app-refacil-form',
@@ -36,7 +37,7 @@ export class RefacilFormComponent {
 
     async submitRefacil() {
         if (this.amount <= 0) {
-            alert('El monto debe ser mayor a cero');
+            toast.error('El monto debe ser mayor a cero');
             return;
         }
 
@@ -47,11 +48,11 @@ export class RefacilFormComponent {
                 this.date
             );
 
-            alert('¡Recarga registrada exitosamente!');
+            toast.success('¡Recarga registrada exitosamente!');
             this.resetForm();
             this.router.navigate(['/dashboard']);
         } catch (error: any) {
-            alert('Error al registrar la recarga: ' + error.message);
+            toast.error('Error al registrar la recarga: ' + error.message);
         }
     }
 

@@ -186,13 +186,63 @@ export class FinanceService {
 
         if (error) throw error;
 
+        // Custom ROI logic for Daniel's inventory COGS:
+        // When a DANIEL sale is recorded, the COGS part should go to the ROI box
+        if (sale.category === 'DANIEL' && sale.cogs > 0) {
+            const roiBox = this.roiBox();
+            if (roiBox) {
+                await this.supabase
+                    .from('cash_boxes')
+                    .update({ balance: roiBox.balance + sale.cogs })
+                    .eq('id', roiBox.id);
+            }
+        }
+
         const newSale = this.parseSale(data);
         this.salesSignal.update(sales => [newSale, ...sales]);
 
-        // Refresh boxes since sales update the principal box balance
+        // Refresh boxes since sales update the principal box balance (via trigger) 
+        // and COGS update ROI box (via manual logic above)
         await this.loadCashBoxes();
 
         return newSale;
+    }
+
+    async recordSales(sales: Omit<Sale, 'id' | 'net_profit' | 'created_at' | 'updated_at'>[]): Promise<void> {
+        if (sales.length === 0) return;
+
+        // Group Daniel's COGS for a single update if possible, but for simplicity we'll do sequential updates
+        // In a real production app, we'd use a transaction or a RPC function for consistency.
+
+        const insertData = sales.map(s => ({
+            date: s.date.toISOString(),
+            category: s.category,
+            gross_amount: s.gross_amount,
+            cogs: s.cogs,
+            description: s.description
+        }));
+
+        const { error } = await this.supabase
+            .from('sales')
+            .insert(insertData);
+
+        if (error) throw error;
+
+        // Update ROI box for all Daniel's inventory COGS
+        const danielSales = sales.filter(s => s.category === 'DANIEL' && s.cogs > 0);
+        if (danielSales.length > 0) {
+            const totalCOGS = danielSales.reduce((sum, s) => sum + s.cogs, 0);
+            const roiBox = this.roiBox();
+            if (roiBox) {
+                await this.supabase
+                    .from('cash_boxes')
+                    .update({ balance: roiBox.balance + totalCOGS })
+                    .eq('id', roiBox.id);
+            }
+        }
+
+        // Refresh everything
+        await this.loadInitialData();
     }
 
     async updateSale(id: string, updates: Partial<Sale>): Promise<void> {

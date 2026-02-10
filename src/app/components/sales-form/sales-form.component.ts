@@ -1,9 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { SaleCategory, SaleCategoryLabels } from '../../models/sale.model';
+import { toast } from 'ngx-sonner';
+
+interface PendingSale {
+    date: Date;
+    category: SaleCategory;
+    grossAmount: number;
+    cogs: number;
+    description: string;
+}
 
 @Component({
     selector: 'app-sales-form',
@@ -12,22 +21,24 @@ import { SaleCategory, SaleCategoryLabels } from '../../models/sale.model';
     templateUrl: './sales-form.component.html'
 })
 export class SalesFormComponent {
-    financeService = inject(FinanceService);
-    router = inject(Router);
+    private financeService = inject(FinanceService);
+    private router = inject(Router);
 
-    // Form model
+    // Current form model (for single entry addition)
     date = new Date();
     category: SaleCategory = SaleCategory.SERVICIOS;
     grossAmount = 0;
     cogs = 0;
     description = '';
 
+    // List of sales to be registered
+    pendingSales = signal<PendingSale[]>([]);
+
     // Enum for template
     SaleCategory = SaleCategory;
     SaleCategoryLabels = SaleCategoryLabels;
 
     parseDate(dateString: string): Date {
-        // Using T12:00:00 to avoid timezone shift issues with date inputs
         return new Date(dateString + 'T12:00:00');
     }
 
@@ -35,56 +46,89 @@ export class SalesFormComponent {
         return new Date();
     }
 
-    // Computed values
+    // Computed values for current form
     get netProfit(): number {
         return this.grossAmount - this.cogs;
     }
 
     get shouldShowCOGS(): boolean {
-        // Show COGS for inventory categories, not for services
         return this.category !== SaleCategory.SERVICIOS;
     }
 
-    async submitSale() {
-        // Validation
+    get totalGrossPending(): number {
+        return this.pendingSales().reduce((sum, s) => sum + s.grossAmount, 0);
+    }
+
+    addToCart() {
         if (this.grossAmount <= 0) {
-            alert('El monto bruto debe ser mayor a cero');
+            toast.error('El monto bruto debe ser mayor a cero');
             return;
         }
 
         if (this.shouldShowCOGS && this.cogs < 0) {
-            alert('El costo no puede ser negativo');
+            toast.error('El costo no puede ser negativo');
             return;
         }
 
         if (this.shouldShowCOGS && this.cogs >= this.grossAmount) {
-            alert('El costo no puede ser mayor o igual al monto bruto');
+            toast.error('El costo no puede ser mayor o igual al monto bruto');
+            return;
+        }
+
+        this.pendingSales.update(prev => [...prev, {
+            date: this.date,
+            category: this.category,
+            grossAmount: this.grossAmount,
+            cogs: this.shouldShowCOGS ? this.cogs : 0,
+            description: this.description
+        }]);
+
+        toast.success('Venta añadida a la lista');
+        this.resetEntryForm();
+    }
+
+    removeSale(index: number) {
+        this.pendingSales.update(prev => prev.filter((_, i) => i !== index));
+        toast.info('Venta eliminada de la lista');
+    }
+
+    async submitAllSales() {
+        if (this.pendingSales().length === 0) {
+            toast.error('No hay ventas en la lista para registrar');
             return;
         }
 
         try {
-            await this.financeService.recordSale({
-                date: this.date,
-                category: this.category,
-                gross_amount: this.grossAmount,
-                cogs: this.shouldShowCOGS ? this.cogs : 0,
-                description: this.description || undefined
-            });
+            const salesToRecord = this.pendingSales().map(s => ({
+                date: s.date,
+                category: s.category,
+                gross_amount: s.grossAmount,
+                cogs: s.cogs,
+                description: s.description || undefined
+            }));
 
-            alert('¡Venta registrada exitosamente!');
-            this.resetForm();
+            await this.financeService.recordSales(salesToRecord);
+
+            toast.success(`¡${salesToRecord.length} ${salesToRecord.length === 1 ? 'venta registrada' : 'ventas registradas'} exitosamente!`);
+            this.pendingSales.set([]);
             this.router.navigate(['/dashboard']);
         } catch (error: any) {
-            alert('Error al registrar la venta: ' + error.message);
+            toast.error('Error al registrar las ventas: ' + error.message);
         }
     }
 
-    resetForm() {
-        this.date = new Date();
+    resetEntryForm() {
+        // We keep the date for convenience when adding multiple entries for the same day
         this.category = SaleCategory.SERVICIOS;
         this.grossAmount = 0;
         this.cogs = 0;
         this.description = '';
+    }
+
+    resetAll() {
+        this.pendingSales.set([]);
+        this.resetEntryForm();
+        this.date = new Date();
     }
 
     formatCurrency(amount: number): string {

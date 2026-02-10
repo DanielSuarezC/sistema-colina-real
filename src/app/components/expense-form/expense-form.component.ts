@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { ExpenseType, ExpenseTypeLabels, Expense } from '../../models/expense.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
     selector: 'app-expense-form',
@@ -59,7 +60,7 @@ export class ExpenseFormComponent {
 
     async submitExpense() {
         if (this.amount <= 0) {
-            alert('El monto debe ser mayor a cero');
+            toast.error('El monto debe ser mayor a cero');
             return;
         }
 
@@ -72,7 +73,7 @@ export class ExpenseFormComponent {
                     quantity: this.quantity ?? undefined,
                     description: this.description || undefined
                 });
-                alert('¡Gasto actualizado exitosamente!');
+                toast.success('¡Gasto actualizado exitosamente!');
             } else {
                 await this.financeService.recordExpense({
                     date: this.date,
@@ -81,11 +82,11 @@ export class ExpenseFormComponent {
                     quantity: this.quantity ?? undefined,
                     description: this.description || undefined
                 });
-                alert('¡Gasto registrado exitosamente!');
+                toast.success('¡Gasto registrado exitosamente!');
             }
             this.resetForm();
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast.error('Error: ' + error.message);
         }
     }
 
@@ -104,7 +105,7 @@ export class ExpenseFormComponent {
         try {
             await this.financeService.deleteExpense(expense.id);
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast.error('Error: ' + error.message);
         }
     }
 

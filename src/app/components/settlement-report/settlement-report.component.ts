@@ -5,6 +5,7 @@ import { AccountingService } from '../../services/accounting.service';
 import { SettlementService } from '../../services/settlement.service';
 import { ExcelExportService } from '../../services/excel-export.service';
 import { SettlementResult } from '../../models/settlement-result.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
   selector: 'app-settlement-report',
@@ -41,7 +42,7 @@ export class SettlementReportComponent {
     const endDate = new Date(this.endDateStr);
 
     if (startDate > endDate) {
-      alert('La fecha de inicio debe ser anterior a la fecha de fin');
+      toast.error('La fecha de inicio debe ser anterior a la fecha de fin');
       return;
     }
 

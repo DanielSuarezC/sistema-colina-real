@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { AuditLog } from '../../models/audit-log.model';
+import { toast } from 'ngx-sonner';
 
 @Component({
     selector: 'app-audit-log',
@@ -58,7 +59,7 @@ export class AuditLogComponent implements OnInit {
 
             this.logs = await this.financeService.loadAuditLogs(filters);
         } catch (error: any) {
-            alert('Error al cargar auditoría: ' + error.message);
+            toast.error('Error al cargar auditoría: ' + error.message);
         } finally {
             this.isLoading = false;
         }
