@@ -6,6 +6,7 @@ import { RefacilTransaction } from '../models/refacil-transaction.model';
 import { Expense } from '../models/expense.model';
 import { Investment } from '../models/investment.model';
 import { Liquidation, LiquidationBreakdown } from '../models/liquidation.model';
+import { AuditLog } from '../models/audit-log.model';
 
 @Injectable({
     providedIn: 'root'
@@ -250,6 +251,16 @@ export class FinanceService {
         return newTransaction;
     }
 
+    async deleteRefacilTransaction(id: string): Promise<void> {
+        const { error } = await this.supabase
+            .from('refacil_transactions')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        await Promise.all([this.loadRefacilTransactions(), this.loadCashBoxes()]);
+    }
+
     // =====================================================
     // EXPENSE OPERATIONS
     // =====================================================
@@ -272,9 +283,34 @@ export class FinanceService {
         const newExpense = this.parseExpense(data);
         this.expensesSignal.update(expenses => [newExpense, ...expenses]);
 
-        // Expenses might affect future balance checks if implemented
-
         return newExpense;
+    }
+
+    async updateExpense(id: string, updates: Partial<Expense>): Promise<void> {
+        const updateData: any = {};
+        if (updates.date) updateData.date = updates.date instanceof Date ? updates.date.toISOString() : updates.date;
+        if (updates.type) updateData.type = updates.type;
+        if (updates.amount !== undefined) updateData.amount = updates.amount;
+        if (updates.quantity !== undefined) updateData.quantity = updates.quantity;
+        if (updates.description !== undefined) updateData.description = updates.description;
+
+        const { error } = await this.supabase
+            .from('expenses')
+            .update(updateData)
+            .eq('id', id);
+
+        if (error) throw error;
+        await this.loadExpenses();
+    }
+
+    async deleteExpense(id: string): Promise<void> {
+        const { error } = await this.supabase
+            .from('expenses')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        await this.loadExpenses();
     }
 
     // =====================================================
@@ -311,6 +347,16 @@ export class FinanceService {
         const { error } = await this.supabase
             .from('investments')
             .update({ recovered_amount: recoveredAmount })
+            .eq('id', id);
+
+        if (error) throw error;
+        await Promise.all([this.loadInvestments(), this.loadCashBoxes()]);
+    }
+
+    async deleteInvestment(id: string): Promise<void> {
+        const { error } = await this.supabase
+            .from('investments')
+            .delete()
             .eq('id', id);
 
         if (error) throw error;
@@ -438,6 +484,50 @@ export class FinanceService {
 
         if (error) throw error;
         await this.loadLiquidations();
+    }
+
+    // =====================================================
+    // AUDIT LOG OPERATIONS
+    // =====================================================
+
+    async loadAuditLogs(filters?: {
+        table_name?: string;
+        action?: string;
+        start_date?: Date;
+        end_date?: Date;
+    }): Promise<AuditLog[]> {
+        let query = this.supabase
+            .from('audit_log')
+            .select('*')
+            .order('changed_at', { ascending: false })
+            .limit(200);
+
+        if (filters?.table_name) {
+            query = query.eq('table_name', filters.table_name);
+        }
+        if (filters?.action) {
+            query = query.eq('action', filters.action);
+        }
+        if (filters?.start_date) {
+            query = query.gte('changed_at', filters.start_date.toISOString());
+        }
+        if (filters?.end_date) {
+            query = query.lte('changed_at', filters.end_date.toISOString());
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        return (data || []).map((d: any) => ({
+            id: d.id,
+            table_name: d.table_name,
+            record_id: d.record_id,
+            action: d.action,
+            old_data: d.old_data,
+            new_data: d.new_data,
+            changed_by: d.changed_by,
+            changed_at: new Date(d.changed_at)
+        }));
     }
 
     // =====================================================
