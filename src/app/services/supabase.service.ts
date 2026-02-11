@@ -17,7 +17,8 @@ export class SupabaseService {
                     persistSession: true,
                     autoRefreshToken: true,
                     detectSessionInUrl: true,
-                    storageKey: 'sistema-colina-real-auth'
+                    storageKey: 'sistema-colina-real-auth-v2',
+                    flowType: 'pkce'
                 }
             }
         );
