@@ -3,7 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { CashBox, CashBoxType, CashBoxTransfer } from '../models/cash-box.model';
 import { Sale } from '../models/sale.model';
 import { RefacilTransaction } from '../models/refacil-transaction.model';
-import { Expense } from '../models/expense.model';
+import { Expense, ExpenseType } from '../models/expense.model';
 import { Investment } from '../models/investment.model';
 import { Liquidation, LiquidationBreakdown } from '../models/liquidation.model';
 import { AuditLog } from '../models/audit-log.model';
@@ -186,23 +186,10 @@ export class FinanceService {
 
         if (error) throw error;
 
-        // Custom ROI logic for Daniel's inventory COGS:
-        // When a DANIEL sale is recorded, the COGS part should go to the ROI box
-        if (sale.category === 'DANIEL' && sale.cogs > 0) {
-            const roiBox = this.roiBox();
-            if (roiBox) {
-                await this.supabase
-                    .from('cash_boxes')
-                    .update({ balance: roiBox.balance + sale.cogs })
-                    .eq('id', roiBox.id);
-            }
-        }
-
         const newSale = this.parseSale(data);
         this.salesSignal.update(sales => [newSale, ...sales]);
 
-        // Refresh boxes since sales update the principal box balance (via trigger) 
-        // and COGS update ROI box (via manual logic above)
+        // Refresh boxes (trigger still updates principal box)
         await this.loadCashBoxes();
 
         return newSale;
@@ -210,9 +197,6 @@ export class FinanceService {
 
     async recordSales(sales: Omit<Sale, 'id' | 'net_profit' | 'created_at' | 'updated_at'>[]): Promise<void> {
         if (sales.length === 0) return;
-
-        // Group Daniel's COGS for a single update if possible, but for simplicity we'll do sequential updates
-        // In a real production app, we'd use a transaction or a RPC function for consistency.
 
         const insertData = sales.map(s => ({
             date: s.date.toISOString(),
@@ -227,19 +211,6 @@ export class FinanceService {
             .insert(insertData);
 
         if (error) throw error;
-
-        // Update ROI box for all Daniel's inventory COGS
-        const danielSales = sales.filter(s => s.category === 'DANIEL' && s.cogs > 0);
-        if (danielSales.length > 0) {
-            const totalCOGS = danielSales.reduce((sum, s) => sum + s.cogs, 0);
-            const roiBox = this.roiBox();
-            if (roiBox) {
-                await this.supabase
-                    .from('cash_boxes')
-                    .update({ balance: roiBox.balance + totalCOGS })
-                    .eq('id', roiBox.id);
-            }
-        }
 
         // Refresh everything
         await this.loadInitialData();
@@ -498,15 +469,90 @@ export class FinanceService {
         startDate: Date,
         endDate: Date
     ): Promise<LiquidationBreakdown> {
-        const { data, error } = await this.supabase
-            .rpc('calculate_liquidation', {
-                p_start_date: startDate.toISOString(),
-                p_end_date: endDate.toISOString()
-            });
+        const startStr = startDate.toISOString();
+        const endStr = endDate.toISOString();
 
-        if (error) throw error;
+        // 1. Fetch Sales
+        const { data: salesData, error: salesError } = await this.supabase
+            .from('sales')
+            .select('*')
+            .gte('date', startStr)
+            .lte('date', endStr);
 
-        return data as LiquidationBreakdown;
+        if (salesError) throw salesError;
+        const sales = (salesData || []).map(this.parseSale);
+
+        // 2. Fetch Recargas
+        const { data: refacilData, error: refacilError } = await this.supabase
+            .from('refacil_transactions')
+            .select('*')
+            .gte('date', startStr)
+            .lte('date', endStr);
+
+        if (refacilError) throw refacilError;
+        const recargas = (refacilData || []).map(this.parseRefacilTransaction);
+
+        // 3. Fetch Expenses
+        const { data: expensesData, error: expensesError } = await this.supabase
+            .from('expenses')
+            .select('*')
+            .gte('date', startStr)
+            .lte('date', endStr);
+
+        if (expensesError) throw expensesError;
+        const expenses = (expensesData || []).map(this.parseExpense);
+
+        // --- CALCULATIONS ---
+
+        // Sales Breakdown
+        const totalSalesGross = sales.reduce((sum, s) => sum + s.gross_amount, 0);
+        const totalCOGS = sales.reduce((sum, s) => sum + s.cogs, 0);
+        const danielInventoryCOGS = sales
+            .filter(s => s.category === 'DANIEL')
+            .reduce((sum, s) => sum + s.cogs, 0);
+
+        // Recargas Breakdown (5.5% profit)
+        const refacil_total_sales = recargas.reduce((sum, r) => sum + r.total_amount, 0);
+        const refacil_profit = Math.round(refacil_total_sales * 0.055 * 100) / 100;
+
+        // Expenses Breakdown
+        const detailed_expenses = expenses.map(e => ({
+            type: e.type,
+            amount: e.amount,
+            description: e.description
+        }));
+
+        const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+        const expenseCategories = {
+            nomina: expenses.filter(e => e.type === ExpenseType.NOMINA).reduce((sum, e) => sum + e.amount, 0),
+            internet: expenses.filter(e => e.type === ExpenseType.INTERNET).reduce((sum, e) => sum + e.amount, 0),
+            luz: expenses.filter(e => e.type === ExpenseType.LUZ).reduce((sum, e) => sum + e.amount, 0),
+            resmas: expenses.filter(e => e.type === ExpenseType.RESMAS).reduce((sum, e) => sum + e.amount, 0),
+            otros: expenses.filter(e => e.type === ExpenseType.OTROS).reduce((sum, e) => sum + e.amount, 0),
+            total: expensesTotal
+        };
+
+        // Profits
+        const grossProfit = totalSalesGross - totalCOGS;
+        const netProfit = grossProfit + refacil_profit - expensesTotal;
+
+        // Split (50/50 of net profit)
+        const robert_50 = Math.round((netProfit / 2) * 100) / 100;
+        const daniel_50 = netProfit - robert_50; // Ensuring total match
+
+        return {
+            totalSalesGross,
+            totalCOGS,
+            grossProfit,
+            expenses: expenseCategories,
+            detailed_expenses,
+            netProfit,
+            daniel_50,
+            robert_50,
+            refacil_total_sales,
+            refacil_profit,
+            daniel_cogs_recovery: danielInventoryCOGS
+        };
     }
 
     async createLiquidation(
@@ -541,6 +587,38 @@ export class FinanceService {
     }
 
     async closeLiquidationPeriod(liquidationId: string): Promise<void> {
+        // 1. Fetch liquidation details if not already in state (or just use what's there)
+        const liquidation = this.liquidationsSignal().find(l => l.id === liquidationId);
+        if (!liquidation) throw new Error('Liquidación no encontrada');
+        if (liquidation.status === 'CLOSED') return;
+
+        const breakdown = liquidation.breakdown as LiquidationBreakdown;
+        if (!breakdown) throw new Error('Detalles de liquidación no encontrados');
+
+        // 2. Perform Cash Box Transfers
+        // A. Returns COGS to ROI Box
+        if (breakdown.daniel_cogs_recovery > 0) {
+            const roiBox = this.roiBox();
+            if (roiBox) {
+                await this.supabase
+                    .from('cash_boxes')
+                    .update({ balance: roiBox.balance + breakdown.daniel_cogs_recovery })
+                    .eq('id', roiBox.id);
+            }
+        }
+
+        // B. Transfer Refacil Profit (5.5%) to Daniel's Benefit Box
+        if (breakdown.refacil_profit > 0) {
+            const benefitBox = this.beneficioDanielBox();
+            if (benefitBox) {
+                await this.supabase
+                    .from('cash_boxes')
+                    .update({ balance: benefitBox.balance + breakdown.refacil_profit })
+                    .eq('id', benefitBox.id);
+            }
+        }
+
+        // 3. Mark as CLOSED
         const { error } = await this.supabase
             .from('liquidations')
             .update({
@@ -550,7 +628,9 @@ export class FinanceService {
             .eq('id', liquidationId);
 
         if (error) throw error;
-        await this.loadLiquidations();
+
+        // 4. Refresh everything
+        await this.loadInitialData();
     }
 
     // =====================================================

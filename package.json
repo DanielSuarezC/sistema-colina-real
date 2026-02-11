@@ -21,6 +21,8 @@
     "@angular/router": "^17.3.0",
     "@supabase/supabase-js": "^2.95.3",
     "chart.js": "^4.5.1",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
     "ng2-charts": "^6.0.1",
     "ngx-sonner": "^1.0.0",
     "rxjs": "~7.8.0",

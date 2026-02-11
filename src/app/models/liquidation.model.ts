@@ -10,9 +10,13 @@ export interface LiquidationBreakdown {
         otros: number;
         total: number;
     };
+    detailed_expenses?: any[];
     netProfit: number;
     daniel_50: number;
     robert_50: number;
+    refacil_total_sales: number;
+    refacil_profit: number;
+    daniel_cogs_recovery: number;
 }
 
 export interface Liquidation {

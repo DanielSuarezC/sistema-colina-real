@@ -29,15 +29,15 @@
 
         <!-- Filters -->
         <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">🔍 Rango del Reporte</h3>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 ">🔍 Rango del Reporte</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Inicio</label>
                     <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Fin</label>
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Fin</label>
                     <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)"
                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
@@ -68,7 +68,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <!-- Sales by Category -->
             <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
-                <h3 class="text-lg font-bold text-slate-800 mb-4">Ventas por Categoría</h3>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Ventas por Categoría</h3>
                 <div class="h-64">
                     <canvas baseChart [data]="salesChartData()" [options]="chartOptions" type="doughnut">
                     </canvas>
@@ -77,7 +77,7 @@
 
             <!-- Income vs Expenses -->
             <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
-                <h3 class="text-lg font-bold text-slate-800 mb-4">Ingresos vs Gastos</h3>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Ingresos vs Gastos</h3>
                 <div class="h-64">
                     <canvas baseChart [data]="incomeVsExpenseChartData()" [options]="chartOptions" type="bar">
                     </canvas>
@@ -90,16 +90,16 @@
             <!-- Sales Detail -->
             <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-slate-800">Detalle de Ventas</h3>
+                    <h3 class="text-xl font-bold text-emerald-600">Detalle de Ventas</h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-500">Utilidad Bruta en Ventas</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-200">Utilidad Bruta en Ventas</p>
                         <p class="text-lg font-bold text-blue-600">{{ formatCurrency(totalProfit()) }}</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
                                 <th class="pb-3">Fecha</th>
                                 <th class="pb-3">Categoría</th>
                                 <th class="pb-3 text-right">Venta</th>
@@ -107,14 +107,14 @@
                                 <th class="pb-3 text-right">Ganancia</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                             @for (sale of filteredSales(); track sale.id) {
-                            <tr class="text-sm">
-                                <td class="py-3 text-slate-600">{{ sale.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800">{{ SaleCategoryLabels[sale.category] }}</td>
-                                <td class="py-3 text-right font-semibold">{{ formatCurrency(sale.gross_amount) }}</td>
-                                <td class="py-3 text-right text-slate-500">{{ formatCurrency(sale.cogs) }}</td>
-                                <td class="py-3 text-right font-bold text-emerald-600">{{
+                            <tr class="text-sm dark:text-slate-200">
+                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ sale.date | date:'dd/MM/yy' }}</td>
+                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ SaleCategoryLabels[sale.category] }}</td>
+                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(sale.gross_amount) }}</td>
+                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(sale.cogs) }}</td>
+                                <td class="py-3 text-right font-bold text-emerald-600 ">{{
                                     formatCurrency(sale.net_profit) }}</td>
                             </tr>
                             }
@@ -126,16 +126,16 @@
             <!-- Recargas Detail -->
             <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-slate-800">Detalle de Recargas (Refácil)</h3>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-indigo-600">Detalle de Recargas (Refácil)</h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-500">Ganancia (5.5%)</p>
-                        <p class="text-lg font-bold text-indigo-600">{{ formatCurrency(totalRecargasProfit()) }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-300">Ganancia (5.5%)</p>
+                        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-600">{{ formatCurrency(totalRecargasProfit()) }}</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
                                 <th class="pb-3">Fecha</th>
                                 <th class="pb-3 text-right">Monto Total</th>
                                 <th class="pb-3 text-right">Utilidad (5.5%)</th>
@@ -145,11 +145,11 @@
                         <tbody class="divide-y divide-slate-100">
                             @for (r of filteredRecargas(); track r.id) {
                             <tr class="text-sm">
-                                <td class="py-3 text-slate-600">{{ r.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 text-right font-semibold">{{ formatCurrency(r.total_amount) }}</td>
-                                <td class="py-3 text-right font-bold text-indigo-600">{{
+                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ r.date | date:'dd/MM/yy' }}</td>
+                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(r.total_amount) }}</td>
+                                <td class="py-3 text-right font-bold text-indigo-600 dark:text-indigo-600">{{
                                     formatCurrency(r.profit_generated) }}</td>
-                                <td class="py-3 text-right text-slate-500">{{ formatCurrency(r.capital_return) }}</td>
+                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(r.capital_return) }}</td>
                             </tr>
                             }
                         </tbody>
@@ -160,16 +160,16 @@
             <!-- Expenses Detail -->
             <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-slate-800">Detalle de Gastos</h3>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-red-600">Detalle de Gastos</h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-500">Total Egresos</p>
-                        <p class="text-lg font-bold text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-300">Total Egresos</p>
+                        <p class="text-lg font-bold text-red-600 dark:text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
                                 <th class="pb-3">Fecha</th>
                                 <th class="pb-3">Tipo</th>
                                 <th class="pb-3">Descripción</th>
@@ -179,10 +179,10 @@
                         <tbody class="divide-y divide-slate-100">
                             @for (e of filteredExpenses(); track e.id) {
                             <tr class="text-sm">
-                                <td class="py-3 text-slate-600">{{ e.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800">{{ ExpenseTypeLabels[e.type] }}</td>
-                                <td class="py-3 text-slate-500 truncate max-w-[200px]">{{ e.description || '-' }}</td>
-                                <td class="py-3 text-right font-bold text-red-600">{{ formatCurrency(e.amount) }}</td>
+                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ e.date | date:'dd/MM/yy' }}</td>
+                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ ExpenseTypeLabels[e.type] }}</td>
+                                <td class="py-3 text-slate-500 truncate max-w-[200px] dark:text-slate-300">{{ e.description || '-' }}</td>
+                                <td class="py-3 text-right font-bold text-red-600 dark:text-red-600">{{ formatCurrency(e.amount) }}</td>
                             </tr>
                             }
                         </tbody>

@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
+import { ThemeService } from '../../services/theme.service';
 import { ExcelExportService } from '../../services/excel-export.service';
 import { SaleCategory, SaleCategoryLabels } from '../../models/sale.model';
 import { ExpenseType, ExpenseTypeLabels } from '../../models/expense.model';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { effect } from '@angular/core';
 
 @Component({
     selector: 'app-reports',
@@ -18,6 +20,7 @@ import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 export class ReportsComponent {
     financeService = inject(FinanceService);
     excelService = inject(ExcelExportService);
+    themeService = inject(ThemeService);
 
     // Filter dates
     startDate = signal<string>('');
@@ -116,6 +119,41 @@ export class ReportsComponent {
             legend: { position: 'bottom' }
         }
     };
+
+    constructor() {
+        effect(() => {
+            this.updateChartTheme(this.themeService.isDarkMode());
+        });
+    }
+
+    updateChartTheme(isDark: boolean) {
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+        this.chartOptions = {
+            ...this.chartOptions,
+            plugins: {
+                ...this.chartOptions?.plugins,
+                legend: {
+                    ...this.chartOptions?.plugins?.legend,
+                    labels: {
+                        color: textColor,
+                        font: { family: "'Inter', sans-serif", size: 12 }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor, display: false }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            }
+        };
+    }
 
     // Labels for template
     SaleCategoryLabels = SaleCategoryLabels;
