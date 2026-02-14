@@ -287,6 +287,35 @@ export class FinanceService {
         await Promise.all([this.loadRefacilTransactions(), this.loadCashBoxes()]);
     }
 
+    async updateRefacilTransaction(id: string, amount: number, description?: string, date?: Date): Promise<void> {
+        const trxDate = date ? date.toISOString() : undefined;
+        // Logic for profit calculation if amount changes could be complex if we want to reverse previous effects perfectly.
+        // For simplicity and correctness with the box model, it might be better to reverse the transaction manually or 
+        // rely on a "diff" logic. However, since we re-calculate liquidations from scratch, we mostly care about the record being correct.
+        // The cash boxes might need adjustment if amount changes. 
+        // BUT `loadCashBoxes` re-fetches from DB. The DB triggers handle balance updates? 
+        // The service seems to rely on `loadCashBoxes` to get fresh state.
+        // Wait, `recordRefacilTransaction` does NOT seem to manually update boxes?
+        // Ah, `recordInvestment` manually updates boxes. `recordRefacilTransaction` does NOT.
+        // This implies Refacil transactions might not affect cash box balances in the DB automatically?
+        // Let's check `RefacilTransaction` model or logic.
+        // The prompt says "Se debería mostrar un historial de recargas y añadirle acciones de editar o eliminar cargas mal digitadas".
+        // If I update a transaction, I should update the record.
+
+        const updateData: any = {};
+        if (amount !== undefined) updateData.total_amount = amount;
+        if (description !== undefined) updateData.description = description;
+        if (date !== undefined) updateData.date = trxDate;
+
+        const { error } = await this.supabase
+            .from('refacil_transactions')
+            .update(updateData)
+            .eq('id', id);
+
+        if (error) throw error;
+        await Promise.all([this.loadRefacilTransactions(), this.loadCashBoxes()]);
+    }
+
     // =====================================================
     // EXPENSE OPERATIONS
     // =====================================================

@@ -6,10 +6,12 @@ import { FinanceService } from '../../services/finance.service';
 import { ExpenseType, ExpenseTypeLabels, Expense } from '../../models/expense.model';
 import { toast } from 'ngx-sonner';
 
+import { DateRangePickerComponent } from '../shared/date-range-picker/date-range-picker.component';
+
 @Component({
     selector: 'app-expense-form',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, DateRangePickerComponent],
     templateUrl: './expense-form.component.html'
 })
 export class ExpenseFormComponent {

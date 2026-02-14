@@ -7,10 +7,12 @@ import { ExcelExportService } from '../../services/excel-export.service';
 import { SettlementResult } from '../../models/settlement-result.model';
 import { toast } from 'ngx-sonner';
 
+import { DateRangePickerComponent } from '../shared/date-range-picker/date-range-picker.component';
+
 @Component({
   selector: 'app-settlement-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateRangePickerComponent],
   templateUrl: './settlement-report.component.html'
 })
 export class SettlementReportComponent {
