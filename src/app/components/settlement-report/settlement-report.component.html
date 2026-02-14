@@ -16,21 +16,13 @@
             Seleccionar  Período
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="label">Fecha Inicio</label>
-              <input
-                type="date"
-                [(ngModel)]="startDateStr"
-                (change)="onDateChange()"
-                class="input-field">
-            </div>
-            <div>
-              <label class="label">Fecha Fin</label>
-              <input
-                type="date"
-                [(ngModel)]="endDateStr"
-                (change)="onDateChange()"
-                class="input-field">
+            <div class="col-span-1 md:col-span-2">
+              <app-date-range-picker
+                [(startDate)]="startDateStr"
+                (startDateChange)="startDateStr=$event; onDateChange()"
+                [(endDate)]="endDateStr"
+                (endDateChange)="endDateStr=$event; onDateChange()">
+              </app-date-range-picker>
             </div>
             <div class="flex items-end">
               <button

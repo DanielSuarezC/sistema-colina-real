@@ -80,16 +80,66 @@
 
                 <!-- Actions -->
                 <div class="flex space-x-4">
-                    <button type="button" (click)="resetForm()"
+                    <button type="button" (click)="editingId ? cancelEdit() : resetForm()"
                         class="flex-1 px-6 py-3 border border-slate-300 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-50 transition-colors">
-                        Limpiar
+                        {{ editingId ? 'Cancelar Edición' : 'Limpiar' }}
                     </button>
                     <button type="submit"
                         class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-md">
-                        Registrar Recarga
+                        {{ editingId ? 'Actualizar Recarga' : 'Registrar Recarga' }}
                     </button>
                 </div>
             </form>
+            
+        </div>
+
+        <!-- History Card -->
+        <div
+            class="mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-white">Últimas Recargas</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead
+                        class="bg-slate-50 dark:bg-slate-700/50 text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
+                        <tr>
+                            <th class="px-6 py-4 text-left">Fecha</th>
+                            <th class="px-6 py-4 text-left">Monto</th>
+                            <th class="px-6 py-4 text-left">Descripción</th>
+                            <th class="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                        @for (trx of financeService.refacilTransactions(); track trx.id) {
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{{ trx.date |
+                                date:'dd/MM/yyyy' }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-800 dark:text-white">{{
+                                formatCurrency(trx.total_amount) }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">{{
+                                trx.description || '-' }}</td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <button (click)="editTransaction(trx)"
+                                    class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium text-sm transition-colors">
+                                    Editar
+                                </button>
+                                <button (click)="deleteTransaction(trx.id)"
+                                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm transition-colors">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500 italic">
+                                No hay recargas recientes
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Info Box -->

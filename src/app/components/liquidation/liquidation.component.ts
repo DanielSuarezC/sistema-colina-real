@@ -11,10 +11,12 @@ import { ChartConfiguration } from 'chart.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import { DateRangePickerComponent } from '../shared/date-range-picker/date-range-picker.component';
+
 @Component({
     selector: 'app-liquidation',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, BaseChartDirective],
+    imports: [CommonModule, FormsModule, RouterLink, BaseChartDirective, DateRangePickerComponent],
     templateUrl: './liquidation.component.html'
 })
 export class LiquidationComponent {
@@ -230,7 +232,10 @@ export class LiquidationComponent {
         doc.text('Firma Daniel', 55, finalY + 5, { align: 'center' });
         doc.text('Firma Robert', 155, finalY + 5, { align: 'center' });
 
-        doc.save(`liquidacion_${period.replace(/ /g, '_')}.pdf`);
+        // Open in new tab instead of saving directly
+        const pdfOutput = doc.output('bloburl');
+        window.open(pdfOutput, '_blank');
+
         toast.success('Reporte generado exitosamente');
     }
 

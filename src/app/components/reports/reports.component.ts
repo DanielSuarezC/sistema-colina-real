@@ -11,10 +11,12 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { effect } from '@angular/core';
 
+import { DateRangePickerComponent } from '../shared/date-range-picker/date-range-picker.component';
+
 @Component({
     selector: 'app-reports',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, BaseChartDirective],
+    imports: [CommonModule, FormsModule, RouterLink, BaseChartDirective, DateRangePickerComponent],
     templateUrl: './reports.component.html'
 })
 export class ReportsComponent {

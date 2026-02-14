@@ -31,16 +31,9 @@
         <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8">
             <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 ">🔍 Rango del Reporte</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Inicio</label>
-                    <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)"
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Fin</label>
-                    <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)"
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                </div>
+                <app-date-range-picker [startDate]="startDate()" (startDateChange)="startDate.set($event)"
+                    [endDate]="endDate()" (endDateChange)="endDate.set($event)">
+                </app-date-range-picker>
             </div>
         </div>
 
@@ -110,10 +103,14 @@
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                             @for (sale of filteredSales(); track sale.id) {
                             <tr class="text-sm dark:text-slate-200">
-                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ sale.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ SaleCategoryLabels[sale.category] }}</td>
-                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(sale.gross_amount) }}</td>
-                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(sale.cogs) }}</td>
+                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ sale.date | date:'dd/MM/yy' }}
+                                </td>
+                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{
+                                    SaleCategoryLabels[sale.category] }}</td>
+                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{
+                                    formatCurrency(sale.gross_amount) }}</td>
+                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{
+                                    formatCurrency(sale.cogs) }}</td>
                                 <td class="py-3 text-right font-bold text-emerald-600 ">{{
                                     formatCurrency(sale.net_profit) }}</td>
                             </tr>
@@ -129,7 +126,8 @@
                     <h3 class="text-xl font-bold text-slate-800 dark:text-indigo-600">Detalle de Recargas (Refácil)</h3>
                     <div class="text-right">
                         <p class="text-xs text-slate-500 dark:text-slate-300">Ganancia (5.5%)</p>
-                        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-600">{{ formatCurrency(totalRecargasProfit()) }}</p>
+                        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-600">{{
+                            formatCurrency(totalRecargasProfit()) }}</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -146,10 +144,12 @@
                             @for (r of filteredRecargas(); track r.id) {
                             <tr class="text-sm">
                                 <td class="py-3 text-slate-600 dark:text-slate-200">{{ r.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(r.total_amount) }}</td>
+                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{
+                                    formatCurrency(r.total_amount) }}</td>
                                 <td class="py-3 text-right font-bold text-indigo-600 dark:text-indigo-600">{{
                                     formatCurrency(r.profit_generated) }}</td>
-                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(r.capital_return) }}</td>
+                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{
+                                    formatCurrency(r.capital_return) }}</td>
                             </tr>
                             }
                         </tbody>
@@ -163,7 +163,8 @@
                     <h3 class="text-xl font-bold text-slate-800 dark:text-red-600">Detalle de Gastos</h3>
                     <div class="text-right">
                         <p class="text-xs text-slate-500 dark:text-slate-300">Total Egresos</p>
-                        <p class="text-lg font-bold text-red-600 dark:text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
+                        <p class="text-lg font-bold text-red-600 dark:text-red-600">{{ formatCurrency(totalExpenses())
+                            }}</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -180,9 +181,12 @@
                             @for (e of filteredExpenses(); track e.id) {
                             <tr class="text-sm">
                                 <td class="py-3 text-slate-600 dark:text-slate-200">{{ e.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ ExpenseTypeLabels[e.type] }}</td>
-                                <td class="py-3 text-slate-500 truncate max-w-[200px] dark:text-slate-300">{{ e.description || '-' }}</td>
-                                <td class="py-3 text-right font-bold text-red-600 dark:text-red-600">{{ formatCurrency(e.amount) }}</td>
+                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{
+                                    ExpenseTypeLabels[e.type] }}</td>
+                                <td class="py-3 text-slate-500 truncate max-w-[200px] dark:text-slate-300">{{
+                                    e.description || '-' }}</td>
+                                <td class="py-3 text-right font-bold text-red-600 dark:text-red-600">{{
+                                    formatCurrency(e.amount) }}</td>
                             </tr>
                             }
                         </tbody>
