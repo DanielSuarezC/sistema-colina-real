@@ -161,6 +161,16 @@ export class LiquidationComponent {
         }
     }
 
+    async cancelLiquidation(id: string) {
+        if (!confirm('¿Está seguro de eliminar esta liquidación? Esta acción no se puede deshacer.')) return;
+        try {
+            await this.financeService.deleteLiquidation(id);
+            toast.success('Liquidación eliminada');
+        } catch (error: any) {
+            toast.error('Error al eliminar: ' + error.message);
+        }
+    }
+
     toggleExpand(id: string) {
         this.expandedId = this.expandedId === id ? null : id;
     }
@@ -171,9 +181,21 @@ export class LiquidationComponent {
         if (!data) return;
 
         const title = liq ? `Reporte de Liquidación #${liq.id.substring(0, 8)}` : 'Previsualización de Liquidación';
-        const period = liq
-            ? `${liq.start_date.toLocaleDateString()} - ${liq.end_date.toLocaleDateString()}`
-            : `${new Date(this.startDate).toLocaleDateString()} - ${new Date(this.endDate).toLocaleDateString()}`;
+
+        let period = '';
+        if (liq) {
+            // Use UTC methods to avoid timezone shift
+            const start = new Date(liq.start_date);
+            const end = new Date(liq.end_date);
+            const startStr = `${start.getUTCDate().toString().padStart(2, '0')}/${(start.getUTCMonth() + 1).toString().padStart(2, '0')}/${start.getUTCFullYear()}`;
+            const endStr = `${end.getUTCDate().toString().padStart(2, '0')}/${(end.getUTCMonth() + 1).toString().padStart(2, '0')}/${end.getUTCFullYear()}`;
+            period = `${startStr} - ${endStr}`;
+        } else {
+            // For preview, startDate/endDate are strings 'yyyy-mm-dd' from input, so direct split is safe and correct
+            const startParts = this.startDate.split('-');
+            const endParts = this.endDate.split('-');
+            period = `${startParts[2]}/${startParts[1]}/${startParts[0]} - ${endParts[2]}/${endParts[1]}/${endParts[0]}`;
+        }
 
         // Header
         doc.setFontSize(20);

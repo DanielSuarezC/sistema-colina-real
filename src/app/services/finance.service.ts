@@ -667,6 +667,20 @@ export class FinanceService {
         await this.loadInitialData();
     }
 
+    async deleteLiquidation(id: string): Promise<void> {
+        const liquidation = this.liquidationsSignal().find(l => l.id === id);
+        if (!liquidation) throw new Error('Liquidación no encontrada');
+        if (liquidation.status !== 'OPEN') throw new Error('Solo se pueden eliminar liquidaciones abiertas');
+
+        const { error } = await this.supabase
+            .from('liquidations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        await this.loadInitialData();
+    }
+
     // =====================================================
     // AUDIT LOG OPERATIONS
     // =====================================================
