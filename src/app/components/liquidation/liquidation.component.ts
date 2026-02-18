@@ -161,6 +161,16 @@ export class LiquidationComponent {
         }
     }
 
+    async cancelLiquidation(id: string) {
+        if (!confirm('¿Está seguro de eliminar esta liquidación? Esta acción no se puede deshacer.')) return;
+        try {
+            await this.financeService.deleteLiquidation(id);
+            toast.success('Liquidación eliminada');
+        } catch (error: any) {
+            toast.error('Error al eliminar: ' + error.message);
+        }
+    }
+
     toggleExpand(id: string) {
         this.expandedId = this.expandedId === id ? null : id;
     }
@@ -171,9 +181,21 @@ export class LiquidationComponent {
         if (!data) return;
 
         const title = liq ? `Reporte de Liquidación #${liq.id.substring(0, 8)}` : 'Previsualización de Liquidación';
-        const period = liq
-            ? `${liq.start_date.toLocaleDateString()} - ${liq.end_date.toLocaleDateString()}`
-            : `${new Date(this.startDate).toLocaleDateString()} - ${new Date(this.endDate).toLocaleDateString()}`;
+
+        let period = '';
+        if (liq) {
+            // Use UTC methods to avoid timezone shift
+            const start = new Date(liq.start_date);
+            const end = new Date(liq.end_date);
+            const startStr = `${start.getUTCDate().toString().padStart(2, '0')}/${(start.getUTCMonth() + 1).toString().padStart(2, '0')}/${start.getUTCFullYear()}`;
+            const endStr = `${end.getUTCDate().toString().padStart(2, '0')}/${(end.getUTCMonth() + 1).toString().padStart(2, '0')}/${end.getUTCFullYear()}`;
+            period = `${startStr} - ${endStr}`;
+        } else {
+            // For preview, startDate/endDate are strings 'yyyy-mm-dd' from input, so direct split is safe and correct
+            const startParts = this.startDate.split('-');
+            const endParts = this.endDate.split('-');
+            period = `${startParts[2]}/${startParts[1]}/${startParts[0]} - ${endParts[2]}/${endParts[1]}/${endParts[0]}`;
+        }
 
         // Header
         doc.setFontSize(20);
@@ -187,32 +209,59 @@ export class LiquidationComponent {
         doc.text(`Periodo: ${period}`, 105, 32, { align: 'center' });
         doc.text(`Fecha de emisión: ${new Date().toLocaleString()}`, 105, 38, { align: 'center' });
 
-        // Summary Table
+        // Calculate derived values for legacy records if missing
+        const operatingProfit = data.operatingProfit ?? (data.grossProfit - data.expenses.total);
+        const refacilCapitalReturn = data.refacil_capital_return ?? (data.refacil_total_sales - data.refacil_profit);
+        const totalDaniel = data.daniel_50 + data.daniel_cogs_recovery + data.refacil_profit;
+        const totalRobert = data.robert_50;
+
+        // 1. Resultados Operativos Table
         autoTable(doc, {
             startY: 45,
-            head: [['Concepto', 'Valor']],
+            head: [['Concepto', 'Operación', 'Valor']],
             body: [
-                ['Ventas Brutas', this.formatCurrency(data.totalSalesGross)],
-                ['Costos (COGS)', this.formatCurrency(data.totalCOGS)],
-                ['Utilidad Bruta en Ventas', this.formatCurrency(data.grossProfit)],
-                ['Total Facturado en Recargas (Informativo)', this.formatCurrency(data.refacil_total_sales)],
-                ['Comisión Recargas (5.5% para Daniel)', this.formatCurrency(data.refacil_profit)],
-                ['Gastos Operativos Totales', this.formatCurrency(data.expenses.total)],
-                ['UTILIDAD NETA DEL PERIODO', this.formatCurrency(data.netProfit)],
+                ['Ventas Brutas', '(+)', this.formatCurrency(data.totalSalesGross)],
+                ['Costos de Mercancía (COGS)', '(-)', this.formatCurrency(data.totalCOGS)],
+                ['Utilidad Bruta en Ventas', '(=)', this.formatCurrency(data.grossProfit)],
+                ['Gastos Operativos Totales', '(-)', this.formatCurrency(data.expenses.total)],
+                ['UTILIDAD OPERATIVA (BASE A REPARTIR)', '(=)', this.formatCurrency(operatingProfit)],
             ],
             theme: 'striped',
-            headStyles: { fillColor: [59, 130, 246] }
+            headStyles: { fillColor: [59, 130, 246] },
+            columnStyles: {
+                0: { cellWidth: 100 },
+                1: { cellWidth: 30, halign: 'center' },
+                2: { halign: 'right' }
+            }
         });
 
-        // Payouts Table
+        // 2. Información Recargas Table
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 10,
-            head: [['Socio / Concepto', 'Participación 50%', 'Compensación/Retorno', 'TOTAL PAGO']],
+            head: [['Concepto Recargas (Refácil)', 'Valor']],
             body: [
-                ['DANIEL', this.formatCurrency(data.daniel_50), this.formatCurrency(data.daniel_cogs_recovery + data.refacil_profit), this.formatCurrency(data.daniel_50 + data.daniel_cogs_recovery + data.refacil_profit)],
-                ['ROBERT', this.formatCurrency(data.robert_50), '$0', this.formatCurrency(data.robert_50)]
+                ['Retorno Capital Recargas (94.5%) -> Caja Recargas', this.formatCurrency(refacilCapitalReturn)],
+                ['Comisión Recargas (5.5%) -> Daniel', this.formatCurrency(data.refacil_profit)]
             ],
-            headStyles: { fillColor: [16, 185, 129] }
+            theme: 'plain',
+            headStyles: { fillColor: [245, 158, 11], textColor: 255 },
+            columnStyles: { 1: { halign: 'right' } }
+        });
+
+        // 3. Liquidación Final Table
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [['Socio', '50% Utilidad Operativa', 'Extras (Recargas/COGS)', 'TOTAL A PAGAR']],
+            body: [
+                ['DANIEL', this.formatCurrency(data.daniel_50), this.formatCurrency(data.daniel_cogs_recovery + data.refacil_profit), this.formatCurrency(totalDaniel)],
+                ['ROBERT', this.formatCurrency(data.robert_50), '$0', this.formatCurrency(totalRobert)]
+            ],
+            headStyles: { fillColor: [16, 185, 129] },
+            columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right', fontStyle: 'bold' }
+            }
         });
 
         // Expenses Detail Table

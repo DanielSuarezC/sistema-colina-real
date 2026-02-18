@@ -1,0 +1,103 @@
+<div class="min-h-screen bg-slate-50 dark:bg-slate-900 p-6 transition-colors duration-300">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">Perfil de Usuario</h1>
+        <p class="text-slate-600 dark:text-slate-400 mb-8">Gestiona tu cuenta y configuración de seguridad</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- User Info Card -->
+            <div class="md:col-span-1">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-slate-100 dark:border-slate-700">
+                    <div class="flex flex-col items-center text-center">
+                        <div
+                            class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mb-4 text-indigo-600 dark:text-indigo-400 text-3xl font-bold">
+                            {{ userEmail().charAt(0).toUpperCase() }}
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-1">Administrador</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">{{ userEmail() }}</p>
+
+                        <button (click)="signOut()"
+                            class="w-full py-2 px-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="md:col-span-2">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-100 dark:border-slate-700">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                            </path>
+                        </svg>
+                        Seguridad
+                    </h3>
+
+                    <!-- Change Password Form -->
+                    <form (submit)="updatePassword($event)">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nueva
+                                    Contraseña</label>
+                                <input type="password" [(ngModel)]="newPassword" name="newPassword"
+                                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                    placeholder="Mínimo 6 caracteres">
+                            </div>
+
+                            <button type="submit" [disabled]="isUpdating || !newPassword"
+                                class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                {{ isUpdating ? 'Actualizando...' : 'Cambiar Contraseña' }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+                    <!-- 2FA Info -->
+                    <div>
+                        <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Autenticación de Dos Factores
+                            (2FA)</h4>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                            Para mayor seguridad, recomendamos habilitar la autenticación de dos factores.
+                            El sistema soporta aplicaciones autenticadoras como Google Authenticator o Authy.
+                        </p>
+
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-amber-700 dark:text-amber-400">
+                                        Para configurar 2FA, por favor contacte al administrador del sistema para
+                                        generar el código QR de vinculación.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Placeholder for future 2FA implementation -->
+                        <button disabled
+                            class="mt-4 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 rounded-lg cursor-not-allowed text-sm font-medium">
+                            Configurar 2FA (Próximamente)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

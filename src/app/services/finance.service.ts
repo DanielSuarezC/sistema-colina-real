@@ -563,11 +563,14 @@ export class FinanceService {
 
         // Profits
         const grossProfit = totalSalesGross - totalCOGS;
-        const netProfit = grossProfit + refacil_profit - expensesTotal;
+        const operatingProfit = grossProfit - expensesTotal; // Basis for 50/50 split
+        const netProfit = operatingProfit + refacil_profit; // Total Net Result including Daniel's commission
 
-        // Split (50/50 of net profit)
-        const robert_50 = Math.round((netProfit / 2) * 100) / 100;
-        const daniel_50 = netProfit - robert_50; // Ensuring total match
+        // Split (50/50 of Operating Profit)
+        const robert_50 = Math.round((operatingProfit / 2) * 100) / 100;
+        const daniel_50 = operatingProfit - robert_50;
+
+        const refacil_capital_return = Math.round((refacil_total_sales - refacil_profit) * 100) / 100;
 
         return {
             totalSalesGross,
@@ -580,7 +583,9 @@ export class FinanceService {
             robert_50,
             refacil_total_sales,
             refacil_profit,
-            daniel_cogs_recovery: danielInventoryCOGS
+            refacil_capital_return,
+            daniel_cogs_recovery: danielInventoryCOGS,
+            operatingProfit
         };
     }
 
@@ -659,6 +664,20 @@ export class FinanceService {
         if (error) throw error;
 
         // 4. Refresh everything
+        await this.loadInitialData();
+    }
+
+    async deleteLiquidation(id: string): Promise<void> {
+        const liquidation = this.liquidationsSignal().find(l => l.id === id);
+        if (!liquidation) throw new Error('Liquidación no encontrada');
+        if (liquidation.status !== 'OPEN') throw new Error('Solo se pueden eliminar liquidaciones abiertas');
+
+        const { error } = await this.supabase
+            .from('liquidations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
         await this.loadInitialData();
     }
 

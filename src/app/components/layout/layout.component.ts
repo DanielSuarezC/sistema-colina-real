@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
     selector: 'app-layout',
@@ -10,6 +11,8 @@ import { RouterModule } from '@angular/router';
 })
 export class LayoutComponent {
     isDarkMode = signal(false);
+    themeService = inject(ThemeService);
+    
 
     constructor() {
         // Load theme preference from localStorage

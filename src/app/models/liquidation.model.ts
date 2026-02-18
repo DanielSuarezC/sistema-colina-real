@@ -16,7 +16,9 @@ export interface LiquidationBreakdown {
     robert_50: number;
     refacil_total_sales: number;
     refacil_profit: number;
+    refacil_capital_return?: number;
     daniel_cogs_recovery: number;
+    operatingProfit?: number; // Base for 50/50 split
 }
 
 export interface Liquidation {
