@@ -25,8 +25,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css",
-              "node_modules/flatpickr/dist/flatpickr.min.css"
+              "src/styles.css"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [

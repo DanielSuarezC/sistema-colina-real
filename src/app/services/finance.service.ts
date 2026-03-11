@@ -7,6 +7,7 @@ import { Expense, ExpenseType } from '../models/expense.model';
 import { Investment } from '../models/investment.model';
 import { Liquidation, LiquidationBreakdown } from '../models/liquidation.model';
 import { AuditLog } from '../models/audit-log.model';
+import { Suggestion } from '../models/suggestion.model';
 
 @Injectable({
     providedIn: 'root'
@@ -19,6 +20,7 @@ export class FinanceService {
     private expensesSignal = signal<Expense[]>([]);
     private investmentsSignal = signal<Investment[]>([]);
     private liquidationsSignal = signal<Liquidation[]>([]);
+    private suggestionsSignal = signal<Suggestion[]>([]);
 
     // Readonly public signals
     public cashBoxes = this.cashBoxesSignal.asReadonly();
@@ -27,6 +29,7 @@ export class FinanceService {
     public expenses = this.expensesSignal.asReadonly();
     public investments = this.investmentsSignal.asReadonly();
     public liquidations = this.liquidationsSignal.asReadonly();
+    public suggestions = this.suggestionsSignal.asReadonly();
 
     // Computed values
     public totalBalance = computed(() =>
@@ -92,7 +95,8 @@ export class FinanceService {
             this.loadRefacilTransactions(),
             this.loadExpenses(),
             this.loadInvestments(),
-            this.loadLiquidations()
+            this.loadLiquidations(),
+            this.loadSuggestions()
         ]);
     }
 
@@ -820,6 +824,75 @@ export class FinanceService {
             concept: data.concept,
             created_by: data.created_by,
             created_at: new Date(data.created_at)
+        };
+    }
+
+    // =====================================================
+    // SUGGESTIONS OPERATIONS
+    // =====================================================
+
+    async loadSuggestions() {
+        const { data, error } = await this.supabase
+            .from('suggestions')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        this.suggestionsSignal.set(data?.map(this.parseSuggestion) || []);
+    }
+
+    async addSuggestion(title: string, description?: string): Promise<Suggestion> {
+        const { data, error } = await this.supabase
+            .from('suggestions')
+            .insert({
+                title,
+                description: description || null,
+                status: 'pendiente'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        const newSuggestion = this.parseSuggestion(data);
+        this.suggestionsSignal.update(list => [newSuggestion, ...list]);
+        return newSuggestion;
+    }
+
+    async updateSuggestion(id: string, updates: Partial<Pick<Suggestion, 'title' | 'description' | 'status'>>): Promise<void> {
+        const updateData: any = {};
+        if (updates.title !== undefined) updateData.title = updates.title;
+        if (updates.description !== undefined) updateData.description = updates.description;
+        if (updates.status !== undefined) updateData.status = updates.status;
+
+        const { error } = await this.supabase
+            .from('suggestions')
+            .update(updateData)
+            .eq('id', id);
+
+        if (error) throw error;
+        await this.loadSuggestions();
+    }
+
+    async deleteSuggestion(id: string): Promise<void> {
+        const { error } = await this.supabase
+            .from('suggestions')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        this.suggestionsSignal.update(list => list.filter(s => s.id !== id));
+    }
+
+    private parseSuggestion(data: any): Suggestion {
+        return {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            created_at: new Date(data.created_at),
+            updated_at: new Date(data.updated_at)
         };
     }
 }
