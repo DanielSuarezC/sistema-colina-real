@@ -8,6 +8,8 @@ import { environment } from '../../environments/environment';
 export class SupabaseService {
     private supabase: SupabaseClient;
 
+    private lockPromise: Promise<void> = Promise.resolve();
+
     constructor() {
         this.supabase = createClient(
             environment.supabase.url,
@@ -18,7 +20,23 @@ export class SupabaseService {
                     autoRefreshToken: true,
                     detectSessionInUrl: true,
                     storageKey: 'sistema-colina-real-auth-v2',
-                    flowType: 'pkce'
+                    flowType: 'pkce',
+                    // Workaround for Angular zone.js interfering with navigator.locks
+                    // which causes: "Acquiring an exclusive Navigator LockManager lock immediately failed"
+                    lock: async (name, timeout, fn) => {
+                        const currentLock = this.lockPromise;
+                        let nextLockResolve: () => void = () => { };
+                        this.lockPromise = new Promise<void>((resolve) => {
+                            nextLockResolve = resolve;
+                        });
+
+                        await currentLock;
+                        try {
+                            return await fn();
+                        } finally {
+                            nextLockResolve();
+                        }
+                    }
                 }
             }
         );
