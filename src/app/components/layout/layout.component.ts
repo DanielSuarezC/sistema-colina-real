@@ -11,8 +11,12 @@ import { ThemeService } from '../../services/theme.service';
 })
 export class LayoutComponent {
     isDarkMode = signal(false);
+    isSidebarOpen = signal(false);
     themeService = inject(ThemeService);
     
+    toggleSidebar(): void {
+        this.isSidebarOpen.update(value => !value);
+    }
 
     constructor() {
         // Load theme preference from localStorage
