@@ -1,12 +1,19 @@
 <div class="min-h-screen flex" [class.dark]="isDarkMode()">
 
+  <!-- Backdrop for mobile -->
+  @if (isSidebarOpen()) {
+    <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/50 z-40 md:hidden transition-opacity" (click)="isSidebarOpen.set(false)"></div>
+  }
+
   <!-- Sidebar -->
-  <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+  <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+         [class.-translate-x-full]="!isSidebarOpen()"
+         [class.translate-x-0]="isSidebarOpen()">
     <!-- Logo/Brand -->
     <div class="p-6 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 flex-shrink-0">
-          <img src="../../../assets/logo-colina-real.png" alt="Logo Colina Real" class="w-full h-full object-contain">
+          <img src="../../../assets/logo-colina-real.png" alt="Logo Colina Real" class="w-full h-full object-contain rounded-full" >
         </div>
         <div>
           <h1 class="text-xl font-bold text-gray-900 dark:text-white">Colina Real</h1>
@@ -21,6 +28,7 @@
         <li>
           <a routerLink="/" routerLinkActive="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
             [routerLinkActiveOptions]="{exact: true}"
+            (click)="isSidebarOpen.set(false)"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -33,6 +41,7 @@
         <li>
           <a routerLink="/sales"
             routerLinkActive="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+            (click)="isSidebarOpen.set(false)"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
@@ -44,6 +53,7 @@
         <li>
           <a routerLink="/liquidations"
             routerLinkActive="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+            (click)="isSidebarOpen.set(false)"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -56,6 +66,7 @@
         <li>
           <a routerLink="/suggestions"
             routerLinkActive="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+            (click)="isSidebarOpen.set(false)"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -68,6 +79,7 @@
         <li class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
           <a routerLink="/profile"
             routerLinkActive="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+            (click)="isSidebarOpen.set(false)"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -99,8 +111,26 @@
       </button>
     </div>
   </aside>
-  <!-- Main Content -->
-  <main class="flex-1 overflow-auto">
-    <router-outlet></router-outlet>
-  </main>
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden"> 
+    <!-- Mobile Header -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between md:hidden shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 flex-shrink-0">
+          <img src="../../../assets/logo-colina-real.png" alt="Logo" class="w-full h-full object-contain rounded-3xl">
+        </div>
+        <h1 class="text-lg font-bold text-gray-900 dark:text-white">Colina Real</h1>
+      </div>
+      <button (click)="toggleSidebar()" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 </div>
