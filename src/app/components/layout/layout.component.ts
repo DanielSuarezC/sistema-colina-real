@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
+import { SyncService } from '../../services/sync.service';
 
 @Component({
     selector: 'app-layout',
@@ -13,6 +14,7 @@ export class LayoutComponent {
     isDarkMode = signal(false);
     isSidebarOpen = signal(false);
     themeService = inject(ThemeService);
+    syncService = inject(SyncService);
     
     toggleSidebar(): void {
         this.isSidebarOpen.update(value => !value);

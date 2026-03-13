@@ -8,6 +8,7 @@ import { Investment } from '../models/investment.model';
 import { Liquidation, LiquidationBreakdown } from '../models/liquidation.model';
 import { AuditLog } from '../models/audit-log.model';
 import { Suggestion } from '../models/suggestion.model';
+import { SyncService } from './sync.service';
 
 @Injectable({
     providedIn: 'root'
@@ -80,8 +81,18 @@ export class FinanceService {
         this.liquidationsSignal().filter(l => l.status === 'OPEN')
     );
 
-    constructor(private supabase: SupabaseService) {
+    constructor(
+        private supabase: SupabaseService,
+        private syncService: SyncService
+    ) {
         this.loadInitialData();
+        
+        // Listen to online status to trigger sync
+        effect(() => {
+            if (this.syncService.isOnline()) {
+                this.syncPendingMutations();
+            }
+        });
     }
 
     // =====================================================
@@ -172,10 +183,68 @@ export class FinanceService {
     }
 
     // =====================================================
+    // OFFLINE SYNC PROCESSING
+    // =====================================================
+    
+    private isSyncing = false;
+    
+    private async syncPendingMutations() {
+        if (this.isSyncing) return;
+        
+        const mutations = this.syncService.pendingMutations();
+        if (mutations.length === 0) return;
+        
+        this.isSyncing = true;
+        try {
+            for (const mutation of mutations) {
+                await this.processMutation(mutation);
+                this.syncService.removeMutation(mutation.id);
+            }
+            await this.loadInitialData(); // Refresh all after sync completes
+        } catch (error) {
+            console.error('Error syncing offline mutations:', error);
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+    
+    private async processMutation(mutation: any) {
+        const payload = mutation.payload;
+        switch (mutation.action) {
+            case 'recordSale':
+                await this.recordSale(payload, true); break;
+            case 'updateSale':
+                await this.updateSale(payload.id, payload.updates, true); break;
+            case 'deleteSale':
+                await this.deleteSale(payload.id, true); break;
+            case 'recordRefacil':
+                await this.recordRefacilTransaction(payload.amount, payload.description, payload.date ? new Date(payload.date) : undefined, true); break;
+            case 'recordExpense':
+                await this.recordExpense(payload, true); break;
+            // Add other cases as needed to fully support offline sync
+        }
+    }
+
+    // =====================================================
     // SALES OPERATIONS
     // =====================================================
 
-    async recordSale(sale: Omit<Sale, 'id' | 'net_profit' | 'created_at' | 'updated_at'>): Promise<Sale> {
+    async recordSale(sale: Omit<Sale, 'id' | 'net_profit' | 'created_at' | 'updated_at'>, fromSync = false): Promise<Sale> {
+        if (!this.syncService.isOnline() && !fromSync) {
+            // Offline Mode: Queue it and optimistically update
+            this.syncService.queueMutation('recordSale', sale);
+            
+            const tempSale: Sale = {
+                ...sale,
+                id: 'temp-' + Date.now().toString(),
+                net_profit: sale.gross_amount - sale.cogs,
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+            this.salesSignal.update(sales => [tempSale, ...sales]);
+            return tempSale;
+        }
+
         const { data, error } = await this.supabase
             .from('sales')
             .insert({
@@ -220,7 +289,13 @@ export class FinanceService {
         await this.loadInitialData();
     }
 
-    async updateSale(id: string, updates: Partial<Sale>): Promise<void> {
+    async updateSale(id: string, updates: Partial<Sale>, fromSync = false): Promise<void> {
+        if (!this.syncService.isOnline() && !fromSync) {
+            this.syncService.queueMutation('updateSale', { id, updates });
+            this.salesSignal.update(sales => sales.map(s => s.id === id ? { ...s, ...updates } : s));
+            return;
+        }
+
         const updateData: any = {};
         if (updates.date) updateData.date = updates.date.toISOString();
         if (updates.category) updateData.category = updates.category;
@@ -237,7 +312,13 @@ export class FinanceService {
         await this.loadInitialData(); // Refresh all to catch box updates
     }
 
-    async deleteSale(id: string): Promise<void> {
+    async deleteSale(id: string, fromSync = false): Promise<void> {
+        if (!this.syncService.isOnline() && !fromSync) {
+            this.syncService.queueMutation('deleteSale', { id });
+            this.salesSignal.update(sales => sales.filter(s => s.id !== id));
+            return;
+        }
+
         const { error } = await this.supabase
             .from('sales')
             .delete()
@@ -254,11 +335,29 @@ export class FinanceService {
     async recordRefacilTransaction(
         amount: number,
         description?: string,
-        date?: Date
+        date?: Date,
+        fromSync = false
     ): Promise<RefacilTransaction> {
         const trxDate = date || new Date();
         const profit = Math.round(amount * 0.055 * 100) / 100;
         const capital = amount - profit;
+
+        if (!this.syncService.isOnline() && !fromSync) {
+            this.syncService.queueMutation('recordRefacil', { amount, description, date: trxDate.toISOString() });
+            
+            const tempTransaction: RefacilTransaction = {
+                id: 'temp-' + Date.now().toString(),
+                date: trxDate,
+                total_amount: amount,
+                profit_generated: profit,
+                capital_return: capital,
+                description: description,
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+            this.refacilSignal.update(transactions => [tempTransaction, ...transactions]);
+            return tempTransaction;
+        }
 
         const { data, error } = await this.supabase
             .from('refacil_transactions')
@@ -324,7 +423,20 @@ export class FinanceService {
     // EXPENSE OPERATIONS
     // =====================================================
 
-    async recordExpense(expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>): Promise<Expense> {
+    async recordExpense(expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>, fromSync = false): Promise<Expense> {
+        if (!this.syncService.isOnline() && !fromSync) {
+            this.syncService.queueMutation('recordExpense', expense);
+            
+            const tempExpense: Expense = {
+                ...expense,
+                id: 'temp-' + Date.now().toString(),
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+            this.expensesSignal.update(expenses => [tempExpense, ...expenses]);
+            return tempExpense;
+        }
+
         const { data, error } = await this.supabase
             .from('expenses')
             .insert({
