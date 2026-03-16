@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, AfterViewInit, OnDestroy, model, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import 'flatpickr/dist/flatpickr.css';
 import flatpickr from 'flatpickr';
 import { Spanish } from 'flatpickr/dist/l10n/es';
 
@@ -36,13 +35,24 @@ import { Spanish } from 'flatpickr/dist/l10n/es';
 export class DateRangePickerComponent implements AfterViewInit, OnDestroy {
     @ViewChild('dateInput') dateInput!: ElementRef<HTMLInputElement>;
 
-    @Input() startDate: string = '';
-    @Input() endDate: string = '';
-
-    @Output() startDateChange = new EventEmitter<string>();
-    @Output() endDateChange = new EventEmitter<string>();
+    startDate = model<string>('');
+    endDate = model<string>('');
 
     private fpInstance: flatpickr.Instance | undefined;
+
+    constructor() {
+        // Update flatpickr when model changes from parent
+        effect(() => {
+            const start = this.startDate();
+            const end = this.endDate();
+            if (this.fpInstance && start && end) {
+                const currentDates = this.fpInstance.selectedDates.map(d => d.toISOString().split('T')[0]);
+                if (currentDates[0] !== start || currentDates[1] !== end) {
+                    this.fpInstance.setDate([start, end], false);
+                }
+            }
+        });
+    }
 
     ngAfterViewInit() {
         this.initFlatpickr();
@@ -55,8 +65,8 @@ export class DateRangePickerComponent implements AfterViewInit, OnDestroy {
     }
 
     private initFlatpickr() {
-        const defaultDate = (this.startDate && this.endDate)
-            ? [this.startDate, this.endDate]
+        const defaultDate = (this.startDate() && this.endDate())
+            ? [this.startDate(), this.endDate()]
             : undefined;
 
         this.fpInstance = flatpickr(this.dateInput.nativeElement, {
@@ -66,19 +76,16 @@ export class DateRangePickerComponent implements AfterViewInit, OnDestroy {
             altInput: true,
             altFormat: 'j F, Y',
             defaultDate: defaultDate as any,
-            // theme property removed
-            onChange: (selectedDates, dateStr) => {
+            onChange: (selectedDates) => {
                 if (selectedDates.length === 2) {
                     const start = this.formatDate(selectedDates[0]);
                     const end = this.formatDate(selectedDates[1]);
 
-                    if (start !== this.startDate) {
-                        this.startDate = start;
-                        this.startDateChange.emit(start);
+                    if (start !== this.startDate()) {
+                        this.startDate.set(start);
                     }
-                    if (end !== this.endDate) {
-                        this.endDate = end;
-                        this.endDateChange.emit(end);
+                    if (end !== this.endDate()) {
+                        this.endDate.set(end);
                     }
                 }
             }
