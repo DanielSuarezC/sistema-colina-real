@@ -313,7 +313,7 @@
                                 }
                             </div>
 
-                            @if (liq.status === 'CLOSED') {
+                            @if (liq.status === 'CLOSED' && liq.closed_at) {
                             <div class="flex items-center text-xs text-slate-400 dark:text-slate-500 italic">
                                 <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
