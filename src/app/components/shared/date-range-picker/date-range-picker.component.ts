@@ -37,6 +37,7 @@ export class DateRangePickerComponent implements AfterViewInit, OnDestroy {
 
     startDate = model<string>('');
     endDate = model<string>('');
+    @Output() dateRangeChange = new EventEmitter<{ start: Date; end: Date }>();
 
     private fpInstance: flatpickr.Instance | undefined;
 
@@ -87,6 +88,12 @@ export class DateRangePickerComponent implements AfterViewInit, OnDestroy {
                     if (end !== this.endDate()) {
                         this.endDate.set(end);
                     }
+
+                    // Emit event for subscribers
+                    this.dateRangeChange.emit({
+                        start: selectedDates[0],
+                        end: selectedDates[1]
+                    });
                 }
             }
         });

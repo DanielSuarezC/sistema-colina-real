@@ -535,6 +535,19 @@ export class FinanceService {
         if (expensesError) throw expensesError;
         const expenses = (expensesData || []).map(this.parseExpense);
 
+        // 4. Fetch Payroll Details
+        const { data: payrollData, error: payrollError } = await this.supabase
+            .from('payroll_logs')
+            .select('*, employees(name)')
+            .gte('date', startStr)
+            .lte('date', endStr);
+
+        if (payrollError) throw payrollError;
+        const payroll_details = (payrollData || []).map((p: any) => ({
+            ...p,
+            employee_name: p.employees?.name
+        }));
+
         // --- CALCULATIONS ---
 
         // Sales Breakdown
@@ -589,7 +602,8 @@ export class FinanceService {
             refacil_profit,
             refacil_capital_return,
             daniel_cogs_recovery: danielInventoryCOGS,
-            operatingProfit
+            operatingProfit,
+            payroll_details
         };
     }
 

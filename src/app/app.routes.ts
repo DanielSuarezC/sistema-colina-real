@@ -4,6 +4,7 @@ import { SalesFormComponent } from './components/sales-form/sales-form.component
 import { RefacilFormComponent } from './components/refacil-form/refacil-form.component';
 import { ExpenseFormComponent } from './components/expense-form/expense-form.component';
 import { InvestmentComponent } from './components/investment/investment.component';
+import { PayrollComponent } from './components/payroll/payroll.component';
 import { LiquidationComponent } from './components/liquidation/liquidation.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { SuggestionsComponent } from './components/suggestions/suggestions.component';
@@ -49,6 +50,10 @@ export const routes: Routes = [
             {
                 path: 'liquidations',
                 component: LiquidationComponent
+            },
+            {
+                path: 'nomina',
+                component: PayrollComponent
             },
             {
                 path: 'profile',
