@@ -269,8 +269,41 @@ export class LiquidationComponent {
             autoTable(doc, {
                 startY: (doc as any).lastAutoTable.finalY + 10,
                 head: [['Detalle de Gastos', 'Concepto', 'Monto']],
-                body: data.detailed_expenses.map(e => [e.type, e.description || '-', this.formatCurrency(e.amount)]),
+                body: data.detailed_expenses
+                    .filter(e => e.type !== 'NOMINA')
+                    .map(e => [e.type, e.description || '-', this.formatCurrency(e.amount)]),
                 headStyles: { fillColor: [107, 114, 128] }
+            });
+        }
+
+        // Payroll Details Table
+        if (data.payroll_details && data.payroll_details.length > 0) {
+            const payrollRows = data.payroll_details.map(p => [
+                new Date(p.date).toLocaleDateString(), 
+                p.employee_name, 
+                `${p.shift} (${p.hours_detail})`, 
+                this.formatCurrency(p.amount)
+            ]);
+
+            // Add totals per employee
+            const totalsByEmployee = data.payroll_details.reduce((acc: any, p: any) => {
+                acc[p.employee_name] = (acc[p.employee_name] || 0) + p.amount;
+                return acc;
+            }, {});
+
+            Object.keys(totalsByEmployee).forEach(empName => {
+                payrollRows.push([
+                    { content: `TOTAL ${empName}`, colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: this.formatCurrency(totalsByEmployee[empName]), styles: { fontStyle: 'bold' } }
+                ]);
+            });
+
+            autoTable(doc, {
+                startY: (doc as any).lastAutoTable.finalY + 10,
+                head: [['Fecha', 'Empleado', 'Turno/Horario', 'Monto']],
+                body: payrollRows,
+                headStyles: { fillColor: [79, 70, 229] },
+                columnStyles: { 3: { halign: 'right' } }
             });
         }
 
