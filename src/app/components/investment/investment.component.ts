@@ -7,10 +7,12 @@ import { Investment } from '../../models/investment.model';
 import { CashBoxType, CashBoxLabels } from '../../models/cash-box.model';
 import { toast } from 'ngx-sonner';
 
+import { DateRangePickerComponent } from '../shared/date-range-picker/date-range-picker.component';
+
 @Component({
     selector: 'app-investment',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, DateRangePickerComponent],
     templateUrl: './investment.component.html'
 })
 export class InvestmentComponent {

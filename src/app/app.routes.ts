@@ -4,10 +4,12 @@ import { SalesFormComponent } from './components/sales-form/sales-form.component
 import { RefacilFormComponent } from './components/refacil-form/refacil-form.component';
 import { ExpenseFormComponent } from './components/expense-form/expense-form.component';
 import { InvestmentComponent } from './components/investment/investment.component';
+import { PayrollComponent } from './components/payroll/payroll.component';
 import { LiquidationComponent } from './components/liquidation/liquidation.component';
-import { AuditLogComponent } from './components/audit-log/audit-log.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { SuggestionsComponent } from './components/suggestions/suggestions.component';
 import { LoginComponent } from './components/login/login.component';
+import { LayoutComponent } from './components/layout/layout.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -21,44 +23,51 @@ export const routes: Routes = [
         component: LoginComponent
     },
     {
-        path: 'dashboard',
-        component: DashboardComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'sales',
-        component: SalesFormComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'recargas',
-        component: RefacilFormComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'expenses',
-        component: ExpenseFormComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'investments',
-        component: InvestmentComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'liquidations',
-        component: LiquidationComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'audit',
-        component: AuditLogComponent,
-        canActivate: [authGuard]
-    },
-    {
-        path: 'reports',
-        component: ReportsComponent,
-        canActivate: [authGuard]
+        path: '',
+        component: LayoutComponent,
+        canActivate: [authGuard],
+        children: [
+            {
+                path: 'dashboard',
+                component: DashboardComponent
+            },
+            {
+                path: 'sales',
+                component: SalesFormComponent
+            },
+            {
+                path: 'recargas',
+                component: RefacilFormComponent
+            },
+            {
+                path: 'expenses',
+                component: ExpenseFormComponent
+            },
+            {
+                path: 'investments',
+                component: InvestmentComponent
+            },
+            {
+                path: 'liquidations',
+                component: LiquidationComponent
+            },
+            {
+                path: 'nomina',
+                component: PayrollComponent
+            },
+            {
+                path: 'profile',
+                loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent)
+            },
+            {
+                path: 'reports',
+                component: ReportsComponent
+            },
+            {
+                path: 'suggestions',
+                component: SuggestionsComponent
+            }
+        ]
     },
     {
         path: '**',

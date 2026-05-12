@@ -27,7 +27,16 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "core-js",
+              "raf",
+              "rgbcolor",
+              "canvg",
+              "html2canvas",
+              "jspdf",
+              "flatpickr"
+            ]
           },
           "configurations": {
             "production": {

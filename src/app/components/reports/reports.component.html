@@ -2,7 +2,7 @@
     class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800 p-6 transition-colors duration-300">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <div class="mb-6 flex justify-between items-end">
+        <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
                 <div class="flex items-center mb-2">
                     <button routerLink="/dashboard"
@@ -28,46 +28,68 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 ">🔍 Rango del Reporte</h3>
+        <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 mb-8 rounded-xl">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">🔍 Filtros del Reporte</h3>
+
+            <!-- Time Presets -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button (click)="applyPreset('today')"
+                    [class]="timePreset() === 'today' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'"
+                    class="px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+                    Hoy
+                </button>
+                <button (click)="applyPreset('7days')"
+                    [class]="timePreset() === '7days' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'"
+                    class="px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+                    Últimos 7 días
+                </button>
+                <button (click)="applyPreset('30days')"
+                    [class]="timePreset() === '30days' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'"
+                    class="px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+                    Últimos 30 días
+                </button>
+                <button (click)="applyPreset('custom')"
+                    [class]="timePreset() === 'custom' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'"
+                    class="px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+                    Personalizado
+                </button>
+            </div>
+
+            <!-- Date Range Picker -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Inicio</label>
-                    <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)"
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-white mb-2">Fecha Fin</label>
-                    <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)"
-                        class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                </div>
+                <app-date-range-picker [startDate]="startDate()"
+                    (startDateChange)="startDate.set($event); timePreset.set('custom')" [endDate]="endDate()"
+                    (endDateChange)="endDate.set($event); timePreset.set('custom')">
+                </app-date-range-picker>
             </div>
         </div>
 
         <!-- Summary Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
-                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Ventas Brutas</p>
-                <p class="text-2xl font-bold text-slate-800">{{ formatCurrency(totalSales()) }}</p>
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-6 border-l-4 border-blue-500">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Ventas Brutas</p>
+                <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ formatCurrency(totalSales()) }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
-                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Volumen Recargas</p>
-                <p class="text-2xl font-bold text-slate-800">{{ formatCurrency(totalRecargasAmount()) }}</p>
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-6 border-l-4 border-purple-500">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Volumen Recargas</p>
+                <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ formatCurrency(totalRecargasAmount()) }}
+                </p>
             </div>
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
-                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Gastos Totales</p>
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-6 border-l-4 border-red-500">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Gastos Totales</p>
                 <p class="text-2xl font-bold text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-emerald-500">
-                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Resultado Neto</p>
-                <p class="text-2xl font-bold text-emerald-700">{{ formatCurrency(netResult()) }}</p>
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-6 border-l-4 border-emerald-500">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Resultado Neto</p>
+                <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{{ formatCurrency(netResult()) }}
+                </p>
             </div>
         </div>
 
-        <!-- Charts Section -->
+        <!-- Summary Charts (Doughnut + Income vs Expenses) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <!-- Sales by Category -->
-            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 rounded-xl">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Ventas por Categoría</h3>
                 <div class="h-64">
                     <canvas baseChart [data]="salesChartData()" [options]="chartOptions" type="doughnut">
@@ -76,7 +98,7 @@
             </div>
 
             <!-- Income vs Expenses -->
-            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 rounded-xl">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Ingresos vs Gastos</h3>
                 <div class="h-64">
                     <canvas baseChart [data]="incomeVsExpenseChartData()" [options]="chartOptions" type="bar">
@@ -85,108 +107,108 @@
             </div>
         </div>
 
-        <!-- Details Section -->
-        <div class="space-y-8">
-            <!-- Sales Detail -->
-            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-emerald-600">Detalle de Ventas</h3>
+        <!-- Chart Type Toggle -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white">📊 Detalle Diario</h2>
+            <div class="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                <button (click)="chartDisplayType.set('line')"
+                    [class]="chartDisplayType() === 'line' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                    class="px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 21l4-4 4 4M3 4h18M4 4v16"></path>
+                    </svg>
+                    Área
+                </button>
+                <button (click)="chartDisplayType.set('bar')"
+                    [class]="chartDisplayType() === 'bar' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                    class="px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    Barras
+                </button>
+            </div>
+        </div>
+
+        <!-- Daily Charts -->
+        <div class="space-y-6">
+            <!-- Daily Sales Chart -->
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                        Ventas Diarias
+                    </h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-400 dark:text-slate-200">Utilidad Bruta en Ventas</p>
-                        <p class="text-lg font-bold text-blue-600">{{ formatCurrency(totalProfit()) }}</p>
+                        <p class="text-xs text-slate-400">Total del Período</p>
+                        <p class="text-lg font-bold text-blue-600">{{ formatCurrency(totalSales()) }}</p>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
-                                <th class="pb-3">Fecha</th>
-                                <th class="pb-3">Categoría</th>
-                                <th class="pb-3 text-right">Venta</th>
-                                <th class="pb-3 text-right">Costo</th>
-                                <th class="pb-3 text-right">Ganancia</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                            @for (sale of filteredSales(); track sale.id) {
-                            <tr class="text-sm dark:text-slate-200">
-                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ sale.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ SaleCategoryLabels[sale.category] }}</td>
-                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(sale.gross_amount) }}</td>
-                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(sale.cogs) }}</td>
-                                <td class="py-3 text-right font-bold text-emerald-600 ">{{
-                                    formatCurrency(sale.net_profit) }}</td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="h-72">
+                    @if (dailySalesChartData().labels?.length) {
+                    <canvas baseChart [data]="dailySalesChartData()" [options]="dailyChartOptions"
+                        [type]="chartDisplayType()">
+                    </canvas>
+                    } @else {
+                    <div class="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                        <p>No hay datos de ventas para el período seleccionado</p>
+                    </div>
+                    }
                 </div>
             </div>
 
-            <!-- Recargas Detail -->
-            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-indigo-600">Detalle de Recargas (Refácil)</h3>
+            <!-- Daily Recargas Chart -->
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-violet-600 dark:text-violet-400 flex items-center gap-2">
+                        <span class="w-3 h-3 bg-violet-500 rounded-full"></span>
+                        Recargas Diarias
+                    </h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-500 dark:text-slate-300">Ganancia (5.5%)</p>
-                        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-600">{{ formatCurrency(totalRecargasProfit()) }}</p>
+                        <p class="text-xs text-slate-400">Total del Período</p>
+                        <p class="text-lg font-bold text-violet-600">{{ formatCurrency(totalRecargasAmount()) }}</p>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
-                                <th class="pb-3">Fecha</th>
-                                <th class="pb-3 text-right">Monto Total</th>
-                                <th class="pb-3 text-right">Utilidad (5.5%)</th>
-                                <th class="pb-3 text-right">Capital (94.5%)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @for (r of filteredRecargas(); track r.id) {
-                            <tr class="text-sm">
-                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ r.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 text-right font-semibold dark:text-slate-200">{{ formatCurrency(r.total_amount) }}</td>
-                                <td class="py-3 text-right font-bold text-indigo-600 dark:text-indigo-600">{{
-                                    formatCurrency(r.profit_generated) }}</td>
-                                <td class="py-3 text-right text-slate-500 dark:text-slate-300">{{ formatCurrency(r.capital_return) }}</td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="h-72">
+                    @if (dailyRecargasChartData().labels?.length) {
+                    <canvas baseChart [data]="dailyRecargasChartData()" [options]="dailyChartOptions"
+                        [type]="chartDisplayType()">
+                    </canvas>
+                    } @else {
+                    <div class="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                        <p>No hay datos de recargas para el período seleccionado</p>
+                    </div>
+                    }
                 </div>
             </div>
 
-            <!-- Expenses Detail -->
-            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6">
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-red-600">Detalle de Gastos</h3>
+            <!-- Daily Expenses Chart -->
+            <div class="bg-white dark:bg-slate-800 shadow-lg dark:shadow-slate-900/50 p-6 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        Gastos Diarios
+                    </h3>
                     <div class="text-right">
-                        <p class="text-xs text-slate-500 dark:text-slate-300">Total Egresos</p>
-                        <p class="text-lg font-bold text-red-600 dark:text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
+                        <p class="text-xs text-slate-400">Total del Período</p>
+                        <p class="text-lg font-bold text-red-600">{{ formatCurrency(totalExpenses()) }}</p>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-xs font-bold text-slate-400 dark:text-slate-200 uppercase tracking-wider">
-                                <th class="pb-3">Fecha</th>
-                                <th class="pb-3">Tipo</th>
-                                <th class="pb-3">Descripción</th>
-                                <th class="pb-3 text-right">Monto</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @for (e of filteredExpenses(); track e.id) {
-                            <tr class="text-sm">
-                                <td class="py-3 text-slate-600 dark:text-slate-200">{{ e.date | date:'dd/MM/yy' }}</td>
-                                <td class="py-3 font-medium text-slate-800 dark:text-slate-200">{{ ExpenseTypeLabels[e.type] }}</td>
-                                <td class="py-3 text-slate-500 truncate max-w-[200px] dark:text-slate-300">{{ e.description || '-' }}</td>
-                                <td class="py-3 text-right font-bold text-red-600 dark:text-red-600">{{ formatCurrency(e.amount) }}</td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="h-72">
+                    @if (dailyExpensesChartData().labels?.length) {
+                    <canvas baseChart [data]="dailyExpensesChartData()" [options]="dailyChartOptions"
+                        [type]="chartDisplayType()">
+                    </canvas>
+                    } @else {
+                    <div class="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                        <p>No hay datos de gastos para el período seleccionado</p>
+                    </div>
+                    }
                 </div>
             </div>
         </div>

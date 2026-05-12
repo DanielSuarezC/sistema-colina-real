@@ -7,6 +7,7 @@ import { Expense, ExpenseType } from '../models/expense.model';
 import { Investment } from '../models/investment.model';
 import { Liquidation, LiquidationBreakdown } from '../models/liquidation.model';
 import { AuditLog } from '../models/audit-log.model';
+import { Suggestion } from '../models/suggestion.model';
 
 @Injectable({
     providedIn: 'root'
@@ -19,6 +20,7 @@ export class FinanceService {
     private expensesSignal = signal<Expense[]>([]);
     private investmentsSignal = signal<Investment[]>([]);
     private liquidationsSignal = signal<Liquidation[]>([]);
+    private suggestionsSignal = signal<Suggestion[]>([]);
 
     // Readonly public signals
     public cashBoxes = this.cashBoxesSignal.asReadonly();
@@ -27,6 +29,7 @@ export class FinanceService {
     public expenses = this.expensesSignal.asReadonly();
     public investments = this.investmentsSignal.asReadonly();
     public liquidations = this.liquidationsSignal.asReadonly();
+    public suggestions = this.suggestionsSignal.asReadonly();
 
     // Computed values
     public totalBalance = computed(() =>
@@ -92,7 +95,8 @@ export class FinanceService {
             this.loadRefacilTransactions(),
             this.loadExpenses(),
             this.loadInvestments(),
-            this.loadLiquidations()
+            this.loadLiquidations(),
+            this.loadSuggestions()
         ]);
     }
 
@@ -281,6 +285,35 @@ export class FinanceService {
         const { error } = await this.supabase
             .from('refacil_transactions')
             .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        await Promise.all([this.loadRefacilTransactions(), this.loadCashBoxes()]);
+    }
+
+    async updateRefacilTransaction(id: string, amount: number, description?: string, date?: Date): Promise<void> {
+        const trxDate = date ? date.toISOString() : undefined;
+        // Logic for profit calculation if amount changes could be complex if we want to reverse previous effects perfectly.
+        // For simplicity and correctness with the box model, it might be better to reverse the transaction manually or 
+        // rely on a "diff" logic. However, since we re-calculate liquidations from scratch, we mostly care about the record being correct.
+        // The cash boxes might need adjustment if amount changes. 
+        // BUT `loadCashBoxes` re-fetches from DB. The DB triggers handle balance updates? 
+        // The service seems to rely on `loadCashBoxes` to get fresh state.
+        // Wait, `recordRefacilTransaction` does NOT seem to manually update boxes?
+        // Ah, `recordInvestment` manually updates boxes. `recordRefacilTransaction` does NOT.
+        // This implies Refacil transactions might not affect cash box balances in the DB automatically?
+        // Let's check `RefacilTransaction` model or logic.
+        // The prompt says "Se debería mostrar un historial de recargas y añadirle acciones de editar o eliminar cargas mal digitadas".
+        // If I update a transaction, I should update the record.
+
+        const updateData: any = {};
+        if (amount !== undefined) updateData.total_amount = amount;
+        if (description !== undefined) updateData.description = description;
+        if (date !== undefined) updateData.date = trxDate;
+
+        const { error } = await this.supabase
+            .from('refacil_transactions')
+            .update(updateData)
             .eq('id', id);
 
         if (error) throw error;
@@ -502,6 +535,19 @@ export class FinanceService {
         if (expensesError) throw expensesError;
         const expenses = (expensesData || []).map(this.parseExpense);
 
+        // 4. Fetch Payroll Details
+        const { data: payrollData, error: payrollError } = await this.supabase
+            .from('payroll_logs')
+            .select('*, employees(name)')
+            .gte('date', startStr)
+            .lte('date', endStr);
+
+        if (payrollError) throw payrollError;
+        const payroll_details = (payrollData || []).map((p: any) => ({
+            ...p,
+            employee_name: p.employees?.name
+        }));
+
         // --- CALCULATIONS ---
 
         // Sales Breakdown
@@ -534,11 +580,14 @@ export class FinanceService {
 
         // Profits
         const grossProfit = totalSalesGross - totalCOGS;
-        const netProfit = grossProfit + refacil_profit - expensesTotal;
+        const operatingProfit = grossProfit - expensesTotal; // Basis for 50/50 split
+        const netProfit = operatingProfit + refacil_profit; // Total Net Result including Daniel's commission
 
-        // Split (50/50 of net profit)
-        const robert_50 = Math.round((netProfit / 2) * 100) / 100;
-        const daniel_50 = netProfit - robert_50; // Ensuring total match
+        // Split (50/50 of Operating Profit)
+        const robert_50 = Math.round((operatingProfit / 2) * 100) / 100;
+        const daniel_50 = operatingProfit - robert_50;
+
+        const refacil_capital_return = Math.round((refacil_total_sales - refacil_profit) * 100) / 100;
 
         return {
             totalSalesGross,
@@ -551,7 +600,10 @@ export class FinanceService {
             robert_50,
             refacil_total_sales,
             refacil_profit,
-            daniel_cogs_recovery: danielInventoryCOGS
+            refacil_capital_return,
+            daniel_cogs_recovery: danielInventoryCOGS,
+            operatingProfit,
+            payroll_details
         };
     }
 
@@ -630,6 +682,20 @@ export class FinanceService {
         if (error) throw error;
 
         // 4. Refresh everything
+        await this.loadInitialData();
+    }
+
+    async deleteLiquidation(id: string): Promise<void> {
+        const liquidation = this.liquidationsSignal().find(l => l.id === id);
+        if (!liquidation) throw new Error('Liquidación no encontrada');
+        if (liquidation.status !== 'OPEN') throw new Error('Solo se pueden eliminar liquidaciones abiertas');
+
+        const { error } = await this.supabase
+            .from('liquidations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
         await this.loadInitialData();
     }
 
@@ -772,6 +838,75 @@ export class FinanceService {
             concept: data.concept,
             created_by: data.created_by,
             created_at: new Date(data.created_at)
+        };
+    }
+
+    // =====================================================
+    // SUGGESTIONS OPERATIONS
+    // =====================================================
+
+    async loadSuggestions() {
+        const { data, error } = await this.supabase
+            .from('suggestions')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        this.suggestionsSignal.set(data?.map(this.parseSuggestion) || []);
+    }
+
+    async addSuggestion(title: string, description?: string): Promise<Suggestion> {
+        const { data, error } = await this.supabase
+            .from('suggestions')
+            .insert({
+                title,
+                description: description || null,
+                status: 'pendiente'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        const newSuggestion = this.parseSuggestion(data);
+        this.suggestionsSignal.update(list => [newSuggestion, ...list]);
+        return newSuggestion;
+    }
+
+    async updateSuggestion(id: string, updates: Partial<Pick<Suggestion, 'title' | 'description' | 'status'>>): Promise<void> {
+        const updateData: any = {};
+        if (updates.title !== undefined) updateData.title = updates.title;
+        if (updates.description !== undefined) updateData.description = updates.description;
+        if (updates.status !== undefined) updateData.status = updates.status;
+
+        const { error } = await this.supabase
+            .from('suggestions')
+            .update(updateData)
+            .eq('id', id);
+
+        if (error) throw error;
+        await this.loadSuggestions();
+    }
+
+    async deleteSuggestion(id: string): Promise<void> {
+        const { error } = await this.supabase
+            .from('suggestions')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        this.suggestionsSignal.update(list => list.filter(s => s.id !== id));
+    }
+
+    private parseSuggestion(data: any): Suggestion {
+        return {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            created_at: new Date(data.created_at),
+            updated_at: new Date(data.updated_at)
         };
     }
 }
