@@ -86,6 +86,7 @@ export class PayrollService {
                 shift: log.shift,
                 hours_detail: log.hours_detail,
                 amount: log.amount,
+                is_paid: false,
                 expense_id: expense.id
             })
             .select()
@@ -108,5 +109,19 @@ export class PayrollService {
         if (expenseId) {
             await this.financeService.deleteExpense(expenseId);
         }
+    }
+
+    async updatePayrollLogStatus(id: string, isPaid: boolean) {
+        const { error } = await this.supabase
+            .from('payroll_logs')
+            .update({ is_paid: isPaid })
+            .eq('id', id);
+
+        if (error) throw error;
+        
+        // Update local signal to reflect change
+        this.payrollLogs.update(logs => 
+            logs.map(log => log.id === id ? { ...log, is_paid: isPaid } : log)
+        );
     }
 }
