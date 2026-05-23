@@ -25,6 +25,32 @@ export class PayrollComponent implements OnInit {
     employees = this.payrollService.employees;
     payrollLogs = this.payrollService.payrollLogs;
 
+    // Filters
+    selectedEmployeeId = signal<string>('all');
+    statusFilter = signal<'all' | 'pending' | 'paid'>('all');
+
+    filteredLogs = computed(() => {
+        let logs = this.payrollLogs();
+        
+        if (this.selectedEmployeeId() !== 'all') {
+            logs = logs.filter(log => log.employee_id === this.selectedEmployeeId());
+        }
+        
+        if (this.statusFilter() === 'pending') {
+            logs = logs.filter(log => !log.is_paid);
+        } else if (this.statusFilter() === 'paid') {
+            logs = logs.filter(log => log.is_paid);
+        }
+        
+        return logs;
+    });
+
+    totalPending = computed(() => {
+        return this.payrollLogs()
+            .filter(log => !log.is_paid)
+            .reduce((sum, log) => sum + log.amount, 0);
+    });
+
     // Forms
     employeeForm = this.fb.group({
         name: ['', [Validators.required, Validators.minLength(3)]]
@@ -114,6 +140,7 @@ export class PayrollComponent implements OnInit {
                 shift: formValue.shift as ShiftType,
                 hours_detail: formValue.hours_detail!,
                 amount: formValue.amount!,
+                is_paid: false,
                 employee_name: employee?.name
             });
             
@@ -150,6 +177,14 @@ export class PayrollComponent implements OnInit {
             );
         } catch (error) {
             alert('Error al eliminar registro');
+        }
+    }
+
+    async togglePaidStatus(log: PayrollLog) {
+        try {
+            await this.payrollService.updatePayrollLogStatus(log.id!, !log.is_paid);
+        } catch (error) {
+            alert('Error al actualizar estado de pago');
         }
     }
 }

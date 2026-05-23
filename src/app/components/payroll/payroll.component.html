@@ -94,10 +94,63 @@
 
       <!-- List Side -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Pendiente</p>
+            <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ totalPending() | currency }}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Registros Filtrados</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ filteredLogs().length }}</p>
+          </div>
+        </div>
+
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Últimos Registros</h3>
-            <app-date-range-picker (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+          <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col gap-6">
+            <div class="flex flex-wrap justify-between items-center gap-4">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Registros de Nómina</h3>
+              <app-date-range-picker (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Filtrar Empleado</label>
+                <select 
+                  [ngModel]="selectedEmployeeId()" 
+                  (ngModelChange)="selectedEmployeeId.set($event)"
+                  class="w-full rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-primary-500">
+                  <option value="all">Todos los empleados</option>
+                  @for (emp of employees(); track emp.id) {
+                    <option [value]="emp.id">{{ emp.name }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Estado de Pago</label>
+                <div class="flex p-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <button 
+                    (click)="statusFilter.set('all')"
+                    [class]="statusFilter() === 'all' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700'"
+                    class="flex-1 py-1 text-xs font-bold rounded-md transition-all">
+                    Todos
+                  </button>
+                  <button 
+                    (click)="statusFilter.set('pending')"
+                    [class]="statusFilter() === 'pending' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'text-gray-500 hover:text-gray-700'"
+                    class="flex-1 py-1 text-xs font-bold rounded-md transition-all">
+                    Pendientes
+                  </button>
+                  <button 
+                    (click)="statusFilter.set('paid')"
+                    [class]="statusFilter() === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'text-gray-500 hover:text-gray-700'"
+                    class="flex-1 py-1 text-xs font-bold rounded-md transition-all">
+                    Pagados
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div class="overflow-x-auto">
@@ -108,41 +161,52 @@
                   <th class="px-6 py-4">Empleado</th>
                   <th class="px-6 py-4">Turno</th>
                   <th class="px-6 py-4">Monto</th>
+                  <th class="px-6 py-4">Estado</th>
                   <th class="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                @for (log of payrollLogs(); track log.id) {
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                    <td class="px-6 py-4 dark:text-white font-medium">{{ log.date | date:'dd/MM/yyyy' }}</td>
-                    <td class="px-6 py-4 dark:text-gray-300">{{ log.employee_name }}</td>
+                @for (log of filteredLogs(); track log.id) {
+                  <tr class="hover:bg-primary-50/50 dark:hover:bg-white/[0.03] transition-colors group">
+                    <td class="px-6 py-4 dark:text-white font-medium text-sm">{{ log.date | date:'dd/MM/yy' }}</td>
+                    <td class="px-6 py-4 dark:text-gray-300 text-sm">{{ log.employee_name }}</td>
                     <td class="px-6 py-4">
-                      <span class="px-3 py-1 rounded-full text-xs font-bold" 
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold" 
                         [ngClass]="{
-                          'bg-blue-100 text-blue-700': log.shift === 'AM',
-                          'bg-purple-100 text-purple-700': log.shift === 'PM',
-                          'bg-green-100 text-green-700': log.shift === 'BOTH',
-                          'bg-gray-100 text-gray-700': log.shift === 'OTHER'
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': log.shift === 'AM',
+                          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': log.shift === 'PM',
+                          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': log.shift === 'BOTH',
+                          'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300': log.shift === 'OTHER'
                         }">
                         {{ log.shift === 'BOTH' ? 'Doble' : (log.shift === 'AM' ? 'Mañana' : (log.shift === 'PM' ? 'Tarde' : 'Otro')) }}
                       </span>
-                      <div class="text-[10px] text-gray-500 mt-1">{{ log.hours_detail }}</div>
                     </td>
-                    <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                    <td class="px-6 py-4 font-bold text-gray-900 dark:text-white text-sm">
                       {{ log.amount | currency }}
                     </td>
-                    <td class="px-6 py-4 text-right">
-                      <button (click)="deleteLog(log)" class="text-red-500 hover:text-red-700 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <td class="px-6 py-4">
+                      <button 
+                        (click)="togglePaidStatus(log)"
+                        [class]="log.is_paid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
+                        class="px-3 py-1 rounded-full text-[10px] font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full" [class]="log.is_paid ? 'bg-green-500' : 'bg-red-500'"></span>
+                        {{ log.is_paid ? 'Pagado' : 'Pendiente' }}
                       </button>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button (click)="deleteLog(log)" class="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       <div class="flex flex-col items-center">
-                        <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                        <p>No se encontraron registros en este periodo.</p>
+                        <svg class="w-12 h-12 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <p class="text-sm">No se encontraron registros con los filtros actuales.</p>
                       </div>
                     </td>
                   </tr>

@@ -14,6 +14,7 @@ export interface PayrollLog {
     shift: ShiftType;
     hours_detail: string;
     amount: number;
+    is_paid: boolean;
     expense_id?: string;
     created_at?: Date;
     // Helper field for UI

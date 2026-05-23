@@ -171,7 +171,46 @@
                                 </ul>
                             </div>
                         </div>
+                        <!-- Payroll Details -->
+                    <div class="mt-8 pt-8 border-t dark:border-slate-800">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-l-4 border-indigo-500 pl-3 mb-4">
+                            Detalle de Nómina en el Periodo
+                        </h4>
+                        <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3">Fecha</th>
+                                        <th class="px-4 py-3">Empleado</th>
+                                        <th class="px-4 py-3">Monto</th>
+                                        <th class="px-4 py-3">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @for (pay of data.payroll_details; track pay.id) {
+                                        <tr class="dark:text-slate-300">
+                                            <td class="px-4 py-3">{{ pay.date | date:'dd/MM' }}</td>
+                                            <td class="px-4 py-3 font-medium">{{ pay.employee_name }}</td>
+                                            <td class="px-4 py-3 font-bold">{{ formatCurrency(pay.amount) }}</td>
+                                            <td class="px-4 py-3">
+                                                <button 
+                                                    (click)="togglePayrollPayment(pay)"
+                                                    [class]="pay.is_paid ? 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200' : 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400 hover:bg-red-200'"
+                                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all transform active:scale-95">
+                                                    {{ pay.is_paid ? 'PAGADO' : 'PENDIENTE' }}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    } @empty {
+                                        <tr>
+                                            <td colspan="4" class="px-4 py-6 text-center text-slate-400 italic">No hay registros de nómina</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                </div>
                 </div>
                 } @else {
                 <div
