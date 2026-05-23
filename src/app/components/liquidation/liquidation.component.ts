@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
+import { PayrollService } from '../../services/payroll.service';
 import { ThemeService } from '../../services/theme.service';
 import { Liquidation, LiquidationBreakdown } from '../../models/liquidation.model';
 import { toast } from 'ngx-sonner';
@@ -21,6 +22,7 @@ import { DateRangePickerComponent } from '../shared/date-range-picker/date-range
 })
 export class LiquidationComponent {
     financeService = inject(FinanceService);
+    payrollService = inject(PayrollService);
     themeService = inject(ThemeService);
 
     // Generation State
@@ -161,6 +163,25 @@ export class LiquidationComponent {
         }
     }
 
+    async togglePayrollPayment(pay: any) {
+        try {
+            await this.payrollService.updatePayrollLogStatus(pay.id, !pay.is_paid);
+            
+            // Update the preview data locally to reflect the change immediately
+            const currentPreview = this.previewData();
+            if (currentPreview && currentPreview.payroll_details) {
+                const updatedDetails = currentPreview.payroll_details.map(p => 
+                    p.id === pay.id ? { ...p, is_paid: !pay.is_paid } : p
+                );
+                this.previewData.set({ ...currentPreview, payroll_details: updatedDetails });
+            }
+            
+            toast.success('Estado de pago actualizado');
+        } catch (error) {
+            toast.error('Error al actualizar pago');
+        }
+    }
+
     async cancelLiquidation(id: string) {
         if (!confirm('¿Está seguro de eliminar esta liquidación? Esta acción no se puede deshacer.')) return;
         try {
@@ -282,7 +303,8 @@ export class LiquidationComponent {
                 new Date(p.date).toLocaleDateString(), 
                 p.employee_name, 
                 `${p.shift} (${p.hours_detail})`, 
-                this.formatCurrency(p.amount)
+                this.formatCurrency(p.amount),
+                p.is_paid ? 'PAGADO' : 'PENDIENTE'
             ]);
 
             // Add totals per employee
@@ -294,16 +316,20 @@ export class LiquidationComponent {
             Object.keys(totalsByEmployee).forEach(empName => {
                 payrollRows.push([
                     { content: `TOTAL ${empName}`, colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: this.formatCurrency(totalsByEmployee[empName]), styles: { fontStyle: 'bold' } }
+                    { content: this.formatCurrency(totalsByEmployee[empName]), styles: { fontStyle: 'bold' } },
+                    { content: '' }
                 ]);
             });
 
             autoTable(doc, {
                 startY: (doc as any).lastAutoTable.finalY + 10,
-                head: [['Fecha', 'Empleado', 'Turno/Horario', 'Monto']],
+                head: [['Fecha', 'Empleado', 'Turno/Horario', 'Monto', 'Estado']],
                 body: payrollRows,
                 headStyles: { fillColor: [79, 70, 229] },
-                columnStyles: { 3: { halign: 'right' } }
+                columnStyles: { 
+                    3: { halign: 'right' },
+                    4: { halign: 'center' }
+                }
             });
         }
 
