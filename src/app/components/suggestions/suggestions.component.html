@@ -43,8 +43,10 @@
             </div>
         </div>
 
-        <!-- Filter Buttons -->
-        <div class="flex gap-2 mb-6">
+        <!-- Actions Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <!-- Filter Buttons -->
+            <div class="flex gap-2">
             <button (click)="filterStatus.set('all')"
                 [class]="filterStatus() === 'all' ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800' : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'"
                 class="px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
@@ -59,6 +61,17 @@
                 [class]="filterStatus() === 'comprado' ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'"
                 class="px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
                 ✅ Comprados
+            </button>
+            </div>
+
+            <!-- Export PDF Button -->
+            <button (click)="exportPendingPDF()"
+                class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium text-sm rounded-lg transition-colors shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Descargar Pendientes PDF
             </button>
         </div>
 

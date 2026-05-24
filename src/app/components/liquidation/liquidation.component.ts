@@ -1,7 +1,8 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FinanceService } from '../../services/finance.service';
 import { PayrollService } from '../../services/payroll.service';
 import { ThemeService } from '../../services/theme.service';
@@ -24,12 +25,20 @@ export class LiquidationComponent {
     financeService = inject(FinanceService);
     payrollService = inject(PayrollService);
     themeService = inject(ThemeService);
+    sanitizer = inject(DomSanitizer);
 
     // Generation State
     startDate = '';
     endDate = '';
     previewData = signal<LiquidationBreakdown | null>(null);
     isGenerating = false;
+
+    // PDF Modal State
+    pdfBlobUrl = signal<string | null>(null);
+    safePdfUrl = computed<SafeResourceUrl | null>(() => {
+        const url = this.pdfBlobUrl();
+        return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+    });
 
     // View State
     expandedId: string | null = null;
@@ -340,11 +349,29 @@ export class LiquidationComponent {
         doc.text('Firma Daniel', 55, finalY + 5, { align: 'center' });
         doc.text('Firma Robert', 155, finalY + 5, { align: 'center' });
 
-        // Open in new tab instead of saving directly
-        const pdfOutput = doc.output('bloburl');
-        window.open(pdfOutput, '_blank');
+        // Revoke previous blob to avoid memory leaks
+        const prev = this.pdfBlobUrl();
+        if (prev) URL.revokeObjectURL(prev);
 
-        toast.success('Reporte generado exitosamente');
+        const pdfOutput = doc.output('bloburl').toString();
+        this.pdfBlobUrl.set(pdfOutput);
+
+        toast.success('Reporte generado — visualízalo y decide si descargar');
+    }
+
+    closePdfModal() {
+        const url = this.pdfBlobUrl();
+        if (url) URL.revokeObjectURL(url);
+        this.pdfBlobUrl.set(null);
+    }
+
+    downloadPdf() {
+        const url = this.pdfBlobUrl();
+        if (!url) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `liquidacion-${new Date().toISOString().split('T')[0]}.pdf`;
+        a.click();
     }
 
     formatCurrency(amount: number): string {

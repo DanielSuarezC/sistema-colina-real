@@ -23,6 +23,10 @@ export const routes: Routes = [
         component: LoginComponent
     },
     {
+        path: 'portal',
+        loadComponent: () => import('./components/public-suggestions/public-suggestions.component').then(m => m.PublicSuggestionsComponent)
+    },
+    {
         path: '',
         component: LayoutComponent,
         canActivate: [authGuard],

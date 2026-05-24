@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FinanceService } from '../../services/finance.service';
 import { Suggestion, SuggestionStatus } from '../../models/suggestion.model';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
     selector: 'app-suggestions',
@@ -89,5 +91,53 @@ export class SuggestionsComponent {
         } catch (error) {
             console.error('Error deleting suggestion:', error);
         }
+    }
+
+    exportPendingPDF() {
+        const pending = this.financeService.suggestions().filter(s => s.status === 'pendiente');
+        if (pending.length === 0) {
+            alert('No hay sugerencias pendientes para exportar.');
+            return;
+        }
+
+        const doc = new jsPDF();
+
+        doc.setFontSize(20);
+        doc.setTextColor(40);
+        doc.text('SISTEMA COLINA REAL', 105, 15, { align: 'center' });
+
+        doc.setFontSize(14);
+        doc.text('Lista de Sugerencias Pendientes', 105, 25, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.text(`Fecha de emisión: ${new Date().toLocaleString('es-CO')}`, 105, 32, { align: 'center' });
+
+        const rows = pending.map((s, i) => [
+            (i + 1).toString(),
+            s.title,
+            s.description || '-',
+            new Date(s.created_at).toLocaleDateString('es-CO')
+        ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['#', 'Artículo / Pedido', 'Descripción', 'Fecha']],
+            body: rows,
+            theme: 'striped',
+            headStyles: { fillColor: [245, 158, 11] },
+            columnStyles: {
+                0: { cellWidth: 10, halign: 'center' },
+                1: { cellWidth: 65 },
+                2: { cellWidth: 80 },
+                3: { cellWidth: 30, halign: 'center' }
+            }
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text(`Total pendientes: ${pending.length}`, 14, finalY);
+
+        doc.save(`sugerencias-pendientes-${new Date().toISOString().split('T')[0]}.pdf`);
     }
 }
